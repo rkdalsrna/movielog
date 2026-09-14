@@ -1,5 +1,5 @@
 ---
-name: Feature
+name: Issues
 about: 새로운 기능 구현 및 작업을 위한 이슈 템플릿입니다.
 title: "[Feat] "
 labels: ''
