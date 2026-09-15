@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:movielog/theme/app_theme.dart';
 import 'package:movielog/week1_screen.dart';
 import 'package:movielog/week0_screen.dart';
 
@@ -10,9 +11,7 @@ class MovieLogApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'MovieLog',
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       home: const Week0Screen(),
       // home: const Week1Screen(),
     );
