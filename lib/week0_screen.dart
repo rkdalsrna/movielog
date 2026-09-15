@@ -7,7 +7,7 @@ class Week0Screen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text("Hello MovieLog!~~~"),
+        child: Text("Hello MovieLog!!!!!!"),
       ),
     );
   }
