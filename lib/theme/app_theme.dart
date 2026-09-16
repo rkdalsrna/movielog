@@ -1,65 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
+import 'app_text_styles.dart';
 
 abstract final class AppTheme {
-  static const double radius = 8;
-
   static final ThemeData light = ThemeData(
     useMaterial3: true,
     fontFamily: 'Manrope',
-    scaffoldBackgroundColor: AppColors.surface,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
-    ).copyWith(
+    scaffoldBackgroundColor: AppColors.warmWhite,
+    colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
       surface: AppColors.surface,
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
-      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-      headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-      titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-      bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-      bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-      labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      titleLarge: AppTextStyles.titleLarge,
+      titleMedium: AppTextStyles.titleMedium,
+      bodyMedium: AppTextStyles.bodyMedium,
+      bodySmall: AppTextStyles.bodySmall,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.warmWhite,
+      foregroundColor: AppColors.black,
+      centerTitle: true,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shadowColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: false,
-    ),
-    cardTheme: const CardThemeData(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-        ),
-      ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(radius),
-        ),
-      ),
-    ),
-    inputDecorationTheme: const InputDecorationTheme(
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.warmWhite,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
     ),
   );
