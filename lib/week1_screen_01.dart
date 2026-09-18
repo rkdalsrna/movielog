@@ -48,10 +48,11 @@ class _ProfileSection extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             //프로필 이미지를 원형으로 표시
-            child: const ClipOval(
-              child: Image(
-                image: AssetImage('assets/images/profile.png'),
+            child: ClipOval(
+              child: Image.asset(
+                'assets/images/profile/profile_movielog.jpg',
                 fit: BoxFit.cover,
+                alignment: const Alignment(0, -0.8),
               ),
             ),
           ),
