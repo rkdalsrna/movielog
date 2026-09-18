@@ -2,6 +2,14 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 abstract final class AppTextStyles {
+  static const appBarTitle = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w500,
+    height: 28 / 22,
+    letterSpacing: 0,
+    color: AppColors.primary,
+  );
+
   static const titleLarge = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w700,

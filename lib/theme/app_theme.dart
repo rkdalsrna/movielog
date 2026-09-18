@@ -9,16 +9,19 @@ abstract final class AppTheme {
     useMaterial3: true,
     fontFamily: 'Manrope',
     scaffoldBackgroundColor: AppColors.warmWhite,
+    //앱 전체 색상 적용
     colorScheme: const ColorScheme.light(
       primary: AppColors.primary,
       surface: AppColors.surface,
     ),
+    //공통 글자 스타일 적용
     textTheme: const TextTheme(
       titleLarge: AppTextStyles.titleLarge,
       titleMedium: AppTextStyles.titleMedium,
       bodyMedium: AppTextStyles.bodyMedium,
       bodySmall: AppTextStyles.bodySmall,
     ),
+    //앱바 공통 모양 적용
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.warmWhite,
       foregroundColor: AppColors.black,
