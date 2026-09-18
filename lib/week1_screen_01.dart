@@ -44,7 +44,7 @@ class _ProfileSection extends StatelessWidget {
             height: 128,
             padding: const EdgeInsets.all(2),
             decoration: const BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.profileImageBorder,
               shape: BoxShape.circle,
             ),
             //프로필 이미지를 원형으로 표시
