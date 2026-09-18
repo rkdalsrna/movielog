@@ -17,7 +17,7 @@ class Week1Screen01 extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(
-          horizontal: 24,
+          horizontal: 16,
           vertical: 24,
         ),
         children: [ //의미 있는 위젯 분리
