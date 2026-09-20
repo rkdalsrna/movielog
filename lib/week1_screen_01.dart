@@ -193,19 +193,23 @@ class _GenreChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), //칩 안쪽에서 글자와 가장자리 사이 간격
-      decoration: BoxDecoration(
-        color: AppColors.lavender,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
+    return Chip(
+      label: Text(
         label,
         style: const TextStyle(
           color: AppColors.primary,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
+      ),
+      backgroundColor: AppColors.lavender,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
     );
   }
