@@ -1,61 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class Week1Screen extends StatelessWidget {
-  const Week1Screen ({super.key});
-
-  static const _backgroundColor = Color(0xFFFAF9F5);
-  static const _primaryColor = Color(0xFF543A92);
-  static const _titleColor = Color(0xFF1D1D1B);
-  static const _supportingTextColor = Color(0xFF4D4955);
+  const Week1Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: _backgroundColor,
       body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.all(32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: const [
-              SizedBox(height: 64), //상단 여백
-              Text(
-                'FLUTTER 0주차',
-                style: TextStyle(
-                  color: _supportingTextColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                children: [
+                  const SizedBox(height: 32),
+                  const Text('FLUTTER 1주차'),
+                  const SizedBox(height: 64),
+                  SvgPicture.asset(
+                    'assets/logos/movielog_logo.svg',
+                    width: 72,
+                    height: 72,
+                    semanticsLabel: 'MovieLog 로고',
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    '영화의 순간을\n기록하세요',
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    '보고 싶은 영화부터 나만의 평점까지\n한곳에서 관리해요',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              SizedBox(height: 64),
-              Icon(
-                Icons.movie_outlined,
-                size: 64,
-                color: _primaryColor,
-              ),
-              SizedBox(height: 58),
-              Text(
-                '영화의 순간을\n기록하세요',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _titleColor,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w400,
-                  height: 1.3,
-                  letterSpacing: -1.2,
-                ),
-              ),
-              SizedBox(height: 12),
-              Text(
-                '보고 싶은 영화부터 나만의 평점까지\n한곳에서 관리해요',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: _supportingTextColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  height: 1.4,
-                  letterSpacing: -0.25,
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {}, // 1주차에는 화면 이동을 연결하지 않습니다.
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 48),
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                  ),
+                  child: const Text('시작하기'),
                 ),
               ),
             ],
