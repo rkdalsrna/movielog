@@ -10,6 +10,10 @@ abstract final class AppColors {
   static const statCardBackground = Color(0xFFF5F3F0);
   static const statCardBorder = Color(0xFFE7E0EC);
   static const lavender = Color(0xFFE9DDFF);
+  static const disabledButton = Color(0xFFCCC2DC);
+  static const disabledButtonText = Color(0xFFF7F3FB);
+  static const error = Color(0xFFBA1A1A);
+  static const errorContainer = Color(0xFFFFDAD6);
 
   static const black = Color(0xFF1C1B1F);
   static const gray = Color(0xFF79747E);
