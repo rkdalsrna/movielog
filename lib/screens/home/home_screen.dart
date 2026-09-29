@@ -10,6 +10,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 홈 화면 전체를 스크롤할 수 있도록 각 섹션을 세로로 배치
     return SafeArea(
       bottom: false,
       child: SingleChildScrollView(
@@ -17,6 +18,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _HomeHeader(
+              // 검색 버튼을 누르면 영화 목록 탭으로 이동
               onSearchPressed: () => context.go('/movies'),
             ),
             const _QuestionHeader(),

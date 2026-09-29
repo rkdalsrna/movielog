@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:movielog/data/mock_movies.dart';
+import 'package:movielog/models/movie.dart';
 import 'package:movielog/theme/app_colors.dart';
 
-//인기있는 영화 목록
+// 인기 영화 목록
 class PopularMoviesSection extends StatelessWidget {
   const PopularMoviesSection({
     super.key,
@@ -95,45 +97,20 @@ class _PopularMovieList extends StatelessWidget {
 
   final VoidCallback onMoviePressed;
 
-  static const movies = [
-    _PopularMovie(
-      title: '어비스 워커',
-      posterAsset: 'assets/images/posters/poster_abyss_walker.jpg',
-      rating: 4.6,
-    ),
-    _PopularMovie(
-      title: '네 번째 오후',
-      posterAsset: 'assets/images/posters/poster_fourth_afternoon.jpg',
-      rating: 4.2,
-    ),
-    _PopularMovie(
-      title: '밤의 그림자',
-      posterAsset: 'assets/images/posters/poster_night_shadows.jpg',
-      rating: 4.8,
-    ),
-    _PopularMovie(
-      title: '속삭이는 숲',
-      posterAsset: 'assets/images/posters/poster_whispering_woods.jpg',
-      rating: 4.4,
-    ),
-    _PopularMovie(
-      title: '공허의 메아리',
-      posterAsset: 'assets/images/posters/poster_echoes_of_the_void.jpg',
-      rating: 4.1,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 256,
+      // 인기 영화를 가로로 스크롤할 수 있게 배치
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: movies.length,
+        itemCount: popularMovies.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           return _PopularMovieCard(
-            movie: movies[index],
+            // 목록의 순서를 포스터 순위로 사용
+            rank: index + 1,
+            movie: popularMovies[index],
             onTap: onMoviePressed,
           );
         },
@@ -144,11 +121,13 @@ class _PopularMovieList extends StatelessWidget {
 
 class _PopularMovieCard extends StatelessWidget {
   const _PopularMovieCard({
+    required this.rank,
     required this.movie,
     required this.onTap,
   });
 
-  final _PopularMovie movie;
+  final int rank;
+  final Movie movie;
   final VoidCallback onTap;
 
   @override
@@ -167,9 +146,45 @@ class _PopularMovieCard extends StatelessWidget {
               child: SizedBox(
                 width: 140,
                 height: 200,
-                child: Image.asset(
-                  movie.posterAsset,
-                  fit: BoxFit.cover,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      movie.posterAsset,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned(
+                      // 순위 라벨을 포스터 내부 왼쪽 위에 배치
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        width: 25,
+                        height: 26,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.heroOverlay,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: AppColors.rankingBadgeBorder,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '$rank',
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontFamily: 'Manrope',
+                            fontSize: 12,
+                            height: 16 / 12,
+                            fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.normal,
+                            letterSpacing: 0,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -216,16 +231,4 @@ class _PopularMovieCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class _PopularMovie {
-  const _PopularMovie({
-    required this.title,
-    required this.posterAsset,
-    required this.rating,
-  });
-
-  final String title;
-  final String posterAsset;
-  final double rating;
 }

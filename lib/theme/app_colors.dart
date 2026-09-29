@@ -6,6 +6,7 @@ abstract final class AppColors {
   static const Color navigationIndicator = Color(0xFFE8DEF9);
   static const Color heroOverlay = Color(0xB2000000);
   static const Color ratingStar = Color(0xFFFFB800);
+  static const Color rankingBadgeBorder = Color(0xFF49454F);
 
   static const warmWhite = Color(0xFFFAF9F5);
   static const white = Color(0xFFFFFFFF);

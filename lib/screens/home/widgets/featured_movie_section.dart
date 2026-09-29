@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/theme/app_colors.dart';
 
-//추천 메인 영화
+// 추천 메인 영화
 class FeaturedMovieSection extends StatelessWidget {
   const FeaturedMovieSection({super.key});
-
-  static const _heroImage =
-      'assets/images/posters/hero_under_the_starlight.jpg';
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +30,15 @@ class _FeaturedMovieCard extends StatelessWidget {
       height: 534,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
+        // 포스터 위에 오버레이와 영화 정보를 겹쳐 표시
         child: Stack(
           fit: StackFit.expand,
           children: [
             Image.asset(
-              FeaturedMovieSection._heroImage,
+              featuredMovie.posterAsset,
               fit: BoxFit.cover,
             ),
+            // 흰색 글자가 잘 보이도록 포스터 전체를 어둡게 처리
             const ColoredBox(color: AppColors.heroOverlay),
             Positioned(
               left: 24,
@@ -49,9 +49,9 @@ class _FeaturedMovieCard extends StatelessWidget {
                 children: [
                   const _RecommendationBadge(),
                   const SizedBox(height: 8),
-                  const Text(
-                    '별빛 아래 우리',
-                    style: TextStyle(
+                  Text(
+                    featuredMovie.title,
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       color: AppColors.white,
                       fontSize: 28,
@@ -61,9 +61,9 @@ class _FeaturedMovieCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '로맨스 · 드라마 · 120분',
-                    style: TextStyle(
+                  Text(
+                    '${featuredMovie.genre} · ${featuredMovie.runningTime}분',
+                    style: const TextStyle(
                       fontFamily: 'Manrope',
                       color: AppColors.white,
                       fontSize: 16,
