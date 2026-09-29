@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:movielog/screens/home/home_screen.dart';
 import 'package:movielog/screens/main_screen.dart';
-import 'package:movielog/screens/movie_list_screen.dart';
+import 'package:movielog/screens/movie/movie_list_screen.dart';
 import 'package:movielog/screens/my_page_screen.dart';
 
 class AppRouter {
