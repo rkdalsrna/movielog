@@ -74,14 +74,10 @@ class _PopularMoviesHeader extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                SizedBox(width: 4),
-                SizedBox(
-                  width: 5,
-                  height: 8,
-                  child: FittedBox(
-                    fit: BoxFit.fill,
-                    child: Icon(Icons.chevron_right),
-                  ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: AppColors.primary,
                 ),
               ],
             ),
