@@ -12,6 +12,7 @@ abstract final class AppColors {
   static const white = Color(0xFFFFFFFF);
   static const profileImageBorder = Color(0xFFD0BCFF);
   static const statCardBackground = Color(0xFFF5F3F0);
+  static const profileStatCardBackground = Color(0xFFF8F2FA);
   static const statCardBorder = Color(0xFFE7E0EC);
   static const lavender = Color(0xFFE9DDFF);
   static const disabledButton = Color(0xFFCCC2DC);

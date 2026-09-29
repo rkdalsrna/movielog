@@ -3,7 +3,7 @@ import 'package:movielog/screens/home/home_screen.dart';
 import 'package:movielog/screens/main_screen.dart';
 import 'package:movielog/screens/movie/movie_list_screen.dart';
 import 'package:movielog/screens/movie/movie_detail_screen.dart';
-import 'package:movielog/screens/my_page_screen.dart';
+import 'package:movielog/screens/my/my_page_screen.dart';
 
 class AppRouter {
   AppRouter._();
