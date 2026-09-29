@@ -12,7 +12,7 @@ class PopularMoviesSection extends StatelessWidget {
   });
 
   final VoidCallback onViewAllPressed;
-  final VoidCallback onMoviePressed;
+  final ValueChanged<Movie> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +91,7 @@ class _PopularMoviesHeader extends StatelessWidget {
 class _PopularMovieList extends StatelessWidget {
   const _PopularMovieList({required this.onMoviePressed});
 
-  final VoidCallback onMoviePressed;
+  final ValueChanged<Movie> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +107,7 @@ class _PopularMovieList extends StatelessWidget {
             // 목록의 순서를 포스터 순위로 사용
             rank: index + 1,
             movie: popularMovies[index],
-            onTap: onMoviePressed,
+            onTap: () => onMoviePressed(popularMovies[index]),
           );
         },
       ),

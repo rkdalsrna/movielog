@@ -5,23 +5,30 @@ import 'package:movielog/theme/app_colors.dart';
 
 // 추천 메인 영화
 class FeaturedMovieSection extends StatelessWidget {
-  const FeaturedMovieSection({super.key});
+  const FeaturedMovieSection({
+    super.key,
+    required this.onDetailPressed,
+  });
+
+  final VoidCallback onDetailPressed;
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    return SizedBox(
       width: double.infinity,
       height: 558,
       child: Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, bottom: 24),
-        child: _FeaturedMovieCard(),
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
+        child: _FeaturedMovieCard(onDetailPressed: onDetailPressed),
       ),
     );
   }
 }
 
 class _FeaturedMovieCard extends StatelessWidget {
-  const _FeaturedMovieCard();
+  const _FeaturedMovieCard({required this.onDetailPressed});
+
+  final VoidCallback onDetailPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +84,7 @@ class _FeaturedMovieCard extends StatelessWidget {
                     width: double.infinity,
                     height: 48,
                     child: FilledButton.icon(
-                      onPressed: () {},
+                      onPressed: onDetailPressed,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,

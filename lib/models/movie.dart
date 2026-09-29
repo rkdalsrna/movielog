@@ -8,6 +8,7 @@ class Movie {
     required this.runningTime,
     required this.posterAsset,
     required this.rating,
+    this.synopsis = '',
   });
 
   final int id;
@@ -17,4 +18,5 @@ class Movie {
   final int runningTime;
   final String posterAsset;
   final double rating;
+  final String synopsis;
 }

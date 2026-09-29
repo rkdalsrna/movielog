@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/screens/home/widgets/featured_movie_section.dart';
 import 'package:movielog/screens/home/widgets/popular_movies_section.dart';
 import 'package:movielog/theme/app_colors.dart';
@@ -22,10 +23,18 @@ class HomeScreen extends StatelessWidget {
               onSearchPressed: () => context.go('/movies'),
             ),
             const _QuestionHeader(),
-            const FeaturedMovieSection(),
+            FeaturedMovieSection(
+              onDetailPressed: () {
+                // 추천 영화 ID를 포함한 상세 Route 이동
+                context.push('/movies/${featuredMovie.id}');
+              },
+            ),
             PopularMoviesSection(
               onViewAllPressed: () => context.go('/movies'),
-              onMoviePressed: () => context.go('/movies'),
+              onMoviePressed: (movie) {
+                // 선택한 인기 영화 ID를 포함한 상세 Route 이동
+                context.push('/movies/${movie.id}');
+              },
             ),
           ],
         ),

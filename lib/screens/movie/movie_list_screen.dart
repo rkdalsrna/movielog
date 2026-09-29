@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/models/movie.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
@@ -55,9 +56,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
                 mainAxisExtent: 316.5,
               ),
               itemBuilder: (context, index) {
+                final movie = _filteredMovies[index];
+
                 return MovieGridCard(
-                  movie: _filteredMovies[index],
-                  onTap: () {},
+                  movie: movie,
+                  // 선택한 영화 ID를 포함한 상세 Route 이동
+                  onTap: () => context.push('/movies/${movie.id}'),
                 );
               },
             ),
