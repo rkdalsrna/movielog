@@ -7,7 +7,9 @@ import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MovieListScreen extends StatefulWidget {
-  const MovieListScreen({super.key});
+  const MovieListScreen({super.key, this.initialGenre});
+
+  final String? initialGenre;
 
   @override
   State<MovieListScreen> createState() => _MovieListScreenState();
@@ -16,8 +18,29 @@ class MovieListScreen extends StatefulWidget {
 class _MovieListScreenState extends State<MovieListScreen> {
   static const _genres = ['전체', '드라마', 'SF', '애니메이션', '스릴러'];
 
-  // 현재 선택된 카테고리 상태
-  String _selectedGenre = _genres.first;
+  // Query Parameter와 일치하는 카테고리 상태
+  late String _selectedGenre;
+
+  String _genreFromQuery(String? genre) {
+    return genre != null && _genres.contains(genre) ? genre : _genres.first;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 처음 전달받은 Query Parameter로 카테고리 초기화
+    _selectedGenre = _genreFromQuery(widget.initialGenre);
+  }
+
+  @override
+  void didUpdateWidget(covariant MovieListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // URL의 Query Parameter 변경 시 선택 카테고리 동기화
+    if (oldWidget.initialGenre != widget.initialGenre) {
+      _selectedGenre = _genreFromQuery(widget.initialGenre);
+    }
+  }
 
   // 선택한 카테고리에 해당하는 영화만 필터링
   List<Movie> get _filteredMovies {
@@ -40,8 +63,15 @@ class _MovieListScreenState extends State<MovieListScreen> {
             genres: _genres,
             selectedGenre: _selectedGenre,
             onSelected: (genre) {
-              // 선택한 카테고리로 상태 갱신 후 영화 목록 재구성
-              setState(() => _selectedGenre = genre);
+              // 선택한 카테고리를 Query Parameter에 반영
+              final location = Uri(
+                path: '/movies',
+                queryParameters: genre == _genres.first
+                    ? null
+                    : {'genre': genre},
+              ).toString();
+
+              context.go(location);
             },
           ),
           Expanded(

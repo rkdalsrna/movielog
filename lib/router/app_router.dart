@@ -25,7 +25,12 @@ class AppRouter {
           ),
           GoRoute(
             path: '/movies',
-            builder: (context, state) => const MovieListScreen(),
+            builder: (context, state) {
+              // Query Parameter의 장르를 영화 목록 화면에 전달
+              return MovieListScreen(
+                initialGenre: state.uri.queryParameters['genre'],
+              );
+            },
           ),
           GoRoute(
             path: '/my',
