@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/models/movie.dart';
+import 'package:movielog/screens/movie/widgets/rating_dialog.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  const MovieDetailScreen({
-    super.key,
-    required this.movieId,
-  });
+  const MovieDetailScreen({super.key, required this.movieId});
 
   final int? movieId;
 
@@ -20,6 +19,31 @@ class MovieDetailScreen extends StatefulWidget {
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
   // 즐겨찾기 선택 상태
   bool _isBookmarked = false;
+
+  // 사용자가 저장한 별점 상태
+  double? _userRating;
+
+  Future<void> _showRatingDialog(Movie movie) async {
+    // Dialog가 반환한 별점 대기
+    final rating = await showDialog<double>(
+      context: context,
+      builder: (context) {
+        return RatingDialog(initialRating: _userRating ?? 0);
+      },
+    );
+
+    // Dialog 취소 시 저장 처리 중단
+    if (rating == null || !mounted) return;
+
+    // Dialog에서 반환한 별점을 화면 내부 상태로 저장
+    setState(() => _userRating = rating);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${movie.title}에 ${rating.toStringAsFixed(1)}점을 남겼습니다.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +77,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
               height: 585,
               fit: BoxFit.cover,
             ),
-            _MovieInformation(movie: movie),
+            _MovieInformation(
+              movie: movie,
+              // 저장한 별점이 없으면 Mock 평점 표시
+              displayedRating: _userRating ?? movie.rating,
+            ),
           ],
         ),
       ),
@@ -74,6 +102,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             ),
           );
         },
+        // 평점 버튼 선택 시 Dialog 열기
+        onRatingPressed: () => _showRatingDialog(movie),
       ),
     );
   }
@@ -81,50 +111,51 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
 class _DetailAppBar extends AppBar {
   _DetailAppBar({required VoidCallback onBackPressed})
-      : super(
-          toolbarHeight: 56,
-          leading: IconButton(
-            onPressed: onBackPressed,
+    : super(
+        toolbarHeight: 56,
+        leading: IconButton(
+          onPressed: onBackPressed,
+          icon: SvgPicture.asset(
+            'assets/icons/arrow_back.svg',
+            width: 20,
+            height: 20,
+            colorFilter: const ColorFilter.mode(
+              AppColors.primary,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+        title: const Text(
+          'Cinema Archive',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontFamily: 'Manrope',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
             icon: SvgPicture.asset(
-              'assets/icons/arrow_back.svg',
-              width: 20,
-              height: 20,
+              'assets/icons/share.svg',
+              width: 18,
+              height: 18,
               colorFilter: const ColorFilter.mode(
-                AppColors.primary,
+                AppColors.black,
                 BlendMode.srcIn,
               ),
             ),
           ),
-          title: const Text(
-            'Cinema Archive',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontFamily: 'Manrope',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          actions: [
-            IconButton(
-              onPressed: () {},
-              icon: SvgPicture.asset(
-                'assets/icons/share.svg',
-                width: 18,
-                height: 18,
-                colorFilter: const ColorFilter.mode(
-                  AppColors.black,
-                  BlendMode.srcIn,
-                ),
-              ),
-            ),
-          ],
-        );
+        ],
+      );
 }
 
 class _MovieInformation extends StatelessWidget {
-  const _MovieInformation({required this.movie});
+  const _MovieInformation({required this.movie, required this.displayedRating});
 
   final Movie movie;
+  final double displayedRating;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +195,8 @@ class _MovieInformation extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _RatingSummary(rating: movie.rating),
+          // 사용자가 저장한 별점이 있으면 해당 값으로 갱신
+          _RatingSummary(rating: displayedRating),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -213,14 +245,14 @@ class _RatingSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // 영화 평점을 별 다섯 개와 숫자로 표시
-        ...List.generate(
-          5,
-          (index) => const Icon(
-            Icons.star_rounded,
-            size: 16,
-            color: AppColors.primary,
-          ),
+        // 저장된 평점만큼 별 채우기
+        RatingBarIndicator(
+          rating: rating,
+          itemCount: 5,
+          itemSize: 16,
+          unratedColor: AppColors.disabledButton,
+          itemBuilder: (context, index) =>
+              const Icon(Icons.star_rounded, color: AppColors.primary),
         ),
         const SizedBox(width: 8),
         Text(
@@ -238,7 +270,7 @@ class _RatingSummary extends StatelessWidget {
         const SizedBox(width: 4),
         const Text(
           '(1,245)',
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.gray,
             fontFamily: 'Manrope',
             fontSize: 14,
@@ -283,10 +315,12 @@ class _DetailActions extends StatelessWidget {
   const _DetailActions({
     required this.isBookmarked,
     required this.onBookmarkPressed,
+    required this.onRatingPressed,
   });
 
   final bool isBookmarked;
   final VoidCallback onBookmarkPressed;
+  final VoidCallback onRatingPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -296,9 +330,7 @@ class _DetailActions extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: const BoxDecoration(
           color: AppColors.warmWhite,
-          border: Border(
-            top: BorderSide(color: AppColors.statCardBorder),
-          ),
+          border: Border(top: BorderSide(color: AppColors.statCardBorder)),
         ),
         child: Row(
           children: [
@@ -327,7 +359,7 @@ class _DetailActions extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: FilledButton.icon(
-                onPressed: () {},
+                onPressed: onRatingPressed,
                 icon: const Icon(Icons.rate_review_outlined, size: 20),
                 label: const Text('평점 남기기'),
               ),
