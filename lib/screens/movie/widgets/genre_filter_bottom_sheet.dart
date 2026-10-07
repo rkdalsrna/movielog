@@ -185,7 +185,8 @@ class _FilterHeader extends StatelessWidget {
 class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _FilterHeaderDelegate();
 
-  static const double _height = 79;
+  // 폰트 렌더링 높이를 포함한 고정 헤더 영역
+  static const double _height = 84;
 
   @override
   double get minExtent => _height;

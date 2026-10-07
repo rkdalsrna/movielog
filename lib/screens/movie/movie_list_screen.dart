@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/models/movie.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
+import 'package:movielog/services/fake_movie_service.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MovieListScreen extends StatefulWidget {
@@ -17,6 +17,8 @@ class MovieListScreen extends StatefulWidget {
 }
 
 class _MovieListScreenState extends State<MovieListScreen> {
+  static const _movieService = FakeMovieService();
+
   static const _genres = [
     '드라마',
     'SF',
@@ -32,6 +34,9 @@ class _MovieListScreenState extends State<MovieListScreen> {
   // Query Parameter와 일치하는 적용 장르 상태
   late Set<String> _selectedGenres;
 
+  // 영화 목록 요청 상태를 보관하는 Future
+  late Future<List<Movie>> _moviesFuture;
+
   Set<String> _genresFromQuery(String? query) {
     if (query == null || query.isEmpty) return {};
 
@@ -39,8 +44,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   @override
-  void initState() {
+  void initState() { //initState()에서 Future 생성
     super.initState();
+
+    // 화면 최초 진입 시 영화 목록 요청
+    _moviesFuture = _movieService.fetchMovies();
+
     // 처음 전달받은 Query Parameter로 적용 장르 초기화
     _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
   }
@@ -56,11 +65,11 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   // 선택한 장르 중 하나라도 일치하는 영화를 OR 조건으로 필터링
-  List<Movie> get _filteredMovies {
+  List<Movie> _filterMovies(List<Movie> loadedMovies) {
     // 선택된 장르가 없으면 모든 영화 반환
-    if (_selectedGenres.isEmpty) return movies;
+    if (_selectedGenres.isEmpty) return loadedMovies;
 
-    return movies.where((movie) {
+    return loadedMovies.where((movie) {
       return _selectedGenres.any((genre) => movie.genre.contains(genre));
     }).toList();
   }
@@ -103,23 +112,37 @@ class _MovieListScreenState extends State<MovieListScreen> {
           const _MovieHeader(),
           _FilterAction(onPressed: _openGenreFilter),
           Expanded(
-            // 필터링된 영화 목록을 2열 그리드로 표시
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
-              itemCount: _filteredMovies.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 24,
-                mainAxisExtent: 316.5,
-              ),
-              itemBuilder: (context, index) {
-                final movie = _filteredMovies[index];
+            child: FutureBuilder<List<Movie>>(
+              future: _moviesFuture,
+              builder: (context, snapshot) {
+                // 영화 목록을 기다리는 동안 Loading 표시
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                return MovieGridCard(
-                  movie: movie,
-                  // 선택한 영화 ID를 포함한 상세 Route 이동
-                  onTap: () => context.push('/movies/${movie.id}'),
+                // 완료된 데이터가 null이면 빈 목록 사용
+                final loadedMovies = snapshot.data ?? const <Movie>[];
+                final filteredMovies = _filterMovies(loadedMovies);
+
+                // 필터링된 영화 목록을 2열 그리드로 표시
+                return GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
+                  itemCount: filteredMovies.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 24,
+                    mainAxisExtent: 316.5,
+                  ),
+                  itemBuilder: (context, index) {
+                    final movie = filteredMovies[index];
+
+                    return MovieGridCard(
+                      movie: movie,
+                      // 선택한 영화 ID를 포함한 상세 Route 이동
+                      onTap: () => context.push('/movies/${movie.id}'),
+                    );
+                  },
                 );
               },
             ),
