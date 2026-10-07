@@ -69,7 +69,16 @@ class _MovieListScreenState extends State<MovieListScreen> {
     // URL에 장르가 있으면 Query Parameter 우선 사용
     if (_selectedGenres.isNotEmpty) return;
 
-    final savedGenres = await _genrePreference.read();
+    Set<String> savedGenres;
+
+    try {
+      savedGenres = await _genrePreference.read();
+    } catch (error) {
+      // 저장소 조회 실패 시 전체 영화 목록 유지
+      debugPrint('선택 장르 복원 실패: $error');
+      return;
+    }
+
     final validGenres = savedGenres.where(_genres.contains).toSet();
 
     // 저장된 장르가 없거나 화면이 사라지면 복원 중단
@@ -132,11 +141,8 @@ class _MovieListScreenState extends State<MovieListScreen> {
     // BottomSheet 취소 시 기존 필터 유지
     if (selectedGenres == null || !mounted) return;
 
-    // 확인한 장르를 로컬 저장소에 저장
-    await _genrePreference.save(selectedGenres);
-
-    // 비동기 저장 중 화면이 사라졌는지 확인
-    if (!mounted) return;
+    // 저장 결과를 기다리지 않고 선택 장르를 화면에 먼저 적용
+    setState(() => _selectedGenres = selectedGenres);
 
     final location = Uri(
       path: '/movies',
@@ -147,6 +153,14 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     // 확인한 장르를 Query Parameter에 적용
     context.go(location);
+
+    try {
+      // 확인한 장르를 로컬 저장소에 저장
+      await _genrePreference.save(selectedGenres);
+    } catch (error) {
+      // 저장 실패가 현재 화면 필터에 영향을 주지 않게 처리
+      debugPrint('선택 장르 저장 실패: $error');
+    }
   }
 
   @override
