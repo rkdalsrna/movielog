@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movielog/models/movie.dart';
+import 'package:movielog/preferences/genre_preference.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid.dart';
 import 'package:movielog/screens/movie/widgets/movie_list_empty.dart';
@@ -21,6 +22,7 @@ class MovieListScreen extends StatefulWidget {
 
 class _MovieListScreenState extends State<MovieListScreen> {
   static const _movieService = FakeMovieService();
+  static final _genrePreference = GenrePreference();
 
   // 성공·빈 목록·실패 화면을 확인하기 위한 요청 모드
   static const _loadMode = MovieLoadMode.success;
@@ -58,6 +60,31 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     // 처음 전달받은 Query Parameter로 적용 장르 초기화
     _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
+
+    // Query Parameter가 없으면 마지막 선택 장르 복원
+    _restoreSelectedGenres();
+  }
+
+  Future<void> _restoreSelectedGenres() async {
+    // URL에 장르가 있으면 Query Parameter 우선 사용
+    if (_selectedGenres.isNotEmpty) return;
+
+    final savedGenres = await _genrePreference.read();
+    final validGenres = savedGenres.where(_genres.contains).toSet();
+
+    // 저장된 장르가 없거나 화면이 사라지면 복원 중단
+    if (validGenres.isEmpty || !mounted) return;
+
+    // 저장된 장르를 화면 상태에 복원
+    setState(() => _selectedGenres = validGenres);
+
+    final location = Uri(
+      path: '/movies',
+      queryParameters: {'genre': validGenres.join(',')},
+    ).toString();
+
+    // 복원된 장르를 Query Parameter에도 반영
+    context.go(location);
   }
 
   @override
@@ -104,6 +131,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     // BottomSheet 취소 시 기존 필터 유지
     if (selectedGenres == null || !mounted) return;
+
+    // 확인한 장르를 로컬 저장소에 저장
+    await _genrePreference.save(selectedGenres);
+
+    // 비동기 저장 중 화면이 사라졌는지 확인
+    if (!mounted) return;
 
     final location = Uri(
       path: '/movies',
