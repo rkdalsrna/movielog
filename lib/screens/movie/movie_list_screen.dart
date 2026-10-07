@@ -25,6 +25,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
   static final _genrePreference = GenrePreference();
 
   // 성공·빈 목록·실패 화면을 확인하기 위한 요청 모드
+  //empty, failure, Success
   static const _loadMode = MovieLoadMode.success;
 
   static const _genres = [

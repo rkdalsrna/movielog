@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 class MovieListError extends StatelessWidget {
-  const MovieListError({super.key, required this.onRetry});
+  const MovieListError({
+    super.key,
+    required this.onRetry,
+  });
 
-  // 다시 시도 버튼 선택 시 실행할 함수
   final VoidCallback onRetry;
 
   @override
@@ -12,12 +14,14 @@ class MovieListError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, size: 40),
+          const Icon(Icons.error_outline),
           const SizedBox(height: 12),
-          // 내부 Exception 대신 사용자용 문구 표시
           const Text('영화를 불러오지 못했습니다.'),
           const SizedBox(height: 16),
-          FilledButton(onPressed: onRetry, child: const Text('다시 시도')),
+          FilledButton(
+            onPressed: onRetry,
+            child: const Text('다시 시도'),
+          ),
         ],
       ),
     );
