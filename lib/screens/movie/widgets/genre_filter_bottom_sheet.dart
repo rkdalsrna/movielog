@@ -47,11 +47,10 @@ class _GenreFilterBottomSheetState extends State<GenreFilterBottomSheet> {
       snapSizes: const [0.45, 0.85],
       expand: false,
       builder: (context, scrollController) {
-        return DecoratedBox(
-          decoration: const BoxDecoration(
-            color: AppColors.warmWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return Material(
+          color: AppColors.warmWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               Expanded(
