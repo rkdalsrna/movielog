@@ -3,7 +3,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movielog/models/movie.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
-import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
+import 'package:movielog/screens/movie/widgets/movie_grid.dart';
+import 'package:movielog/screens/movie/widgets/movie_list_empty.dart';
+import 'package:movielog/screens/movie/widgets/movie_list_error.dart';
+import 'package:movielog/screens/movie/widgets/movie_list_loading.dart';
 import 'package:movielog/services/fake_movie_service.dart';
 import 'package:movielog/theme/app_colors.dart';
 
@@ -18,6 +21,9 @@ class MovieListScreen extends StatefulWidget {
 
 class _MovieListScreenState extends State<MovieListScreen> {
   static const _movieService = FakeMovieService();
+
+  // 성공·빈 목록·실패 화면을 확인하기 위한 요청 모드
+  static const _loadMode = MovieLoadMode.success;
 
   static const _genres = [
     '드라마',
@@ -44,11 +50,11 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   @override
-  void initState() { //initState()에서 Future 생성
+  void initState() {
     super.initState();
 
     // 화면 최초 진입 시 영화 목록 요청
-    _moviesFuture = _movieService.fetchMovies();
+    _moviesFuture = _movieService.fetchMovies(mode: _loadMode);
 
     // 처음 전달받은 Query Parameter로 적용 장르 초기화
     _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
@@ -72,6 +78,13 @@ class _MovieListScreenState extends State<MovieListScreen> {
     return loadedMovies.where((movie) {
       return _selectedGenres.any((genre) => movie.genre.contains(genre));
     }).toList();
+  }
+
+  void _retry() {
+    setState(() {
+      // 다시 시도할 때만 새로운 Future 생성
+      _moviesFuture = _movieService.fetchMovies(mode: _loadMode);
+    });
   }
 
   Future<void> _openGenreFilter() async {
@@ -117,31 +130,29 @@ class _MovieListScreenState extends State<MovieListScreen> {
               builder: (context, snapshot) {
                 // 영화 목록을 기다리는 동안 Loading 표시
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const MovieListLoading();
+                }
+
+                // 내부 오류 정보 대신 사용자용 Error 화면 표시
+                if (snapshot.hasError) {
+                  return MovieListError(onRetry: _retry);
                 }
 
                 // 완료된 데이터가 null이면 빈 목록 사용
                 final loadedMovies = snapshot.data ?? const <Movie>[];
                 final filteredMovies = _filterMovies(loadedMovies);
 
-                // 필터링된 영화 목록을 2열 그리드로 표시
-                return GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
-                  itemCount: filteredMovies.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 24,
-                    mainAxisExtent: 316.5,
-                  ),
-                  itemBuilder: (context, index) {
-                    final movie = filteredMovies[index];
+                // 빈 목록이면 Empty 화면 표시
+                if (filteredMovies.isEmpty) {
+                  return const MovieListEmpty();
+                }
 
-                    return MovieGridCard(
-                      movie: movie,
-                      // 선택한 영화 ID를 포함한 상세 Route 이동
-                      onTap: () => context.push('/movies/${movie.id}'),
-                    );
+                // 성공 시 기존 영화 Grid 표시
+                return MovieGrid(
+                  movies: filteredMovies,
+                  onMoviePressed: (movie) {
+                    // 선택한 영화 ID를 포함한 상세 Route 이동
+                    context.push('/movies/${movie.id}');
                   },
                 );
               },

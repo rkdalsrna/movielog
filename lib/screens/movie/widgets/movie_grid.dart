@@ -26,10 +26,7 @@ class MovieGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final movie = movies[index];
 
-        return MovieGridCard(
-          movie: movie,
-          onTap: () => onMoviePressed(movie),
-        );
+        return MovieGridCard(movie: movie, onTap: () => onMoviePressed(movie));
       },
     );
   }
