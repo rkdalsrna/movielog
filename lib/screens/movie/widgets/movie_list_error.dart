@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class MovieListError extends StatelessWidget {
   const MovieListError({super.key, required this.onRetry});
 
+  // 다시 시도 버튼 선택 시 실행할 함수
   final VoidCallback onRetry;
 
   @override

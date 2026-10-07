@@ -5,6 +5,7 @@ class MovieListLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 영화 목록 요청 중 로딩 표시
     return const Center(child: CircularProgressIndicator());
   }
 }
