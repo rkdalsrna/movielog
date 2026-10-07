@@ -11,30 +11,39 @@ class AppRouter {
   static final router = GoRouter(
     initialLocation: '/home',
     routes: [
-      ShellRoute(
-        builder: (context, state, child) {
-          return MainScreen(
-            currentIndex: indexFromLocation(state.uri.path),
-            child: child,
-          );
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainScreen(navigationShell: navigationShell);
         },
-        routes: [
-          GoRoute(
-            path: '/home',
-            builder: (context, state) => const HomeScreen(),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/movies',
-            builder: (context, state) {
-              // Query Parameter의 장르를 영화 목록 화면에 전달
-              return MovieListScreen(
-                initialGenre: state.uri.queryParameters['genre'],
-              );
-            },
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/movies',
+                builder: (context, state) {
+                  // Query Parameter의 장르를 영화 목록 화면에 전달
+                  return MovieListScreen(
+                    initialGenresQuery: state.uri.queryParameters['genre'],
+                  );
+                },
+              ),
+            ],
           ),
-          GoRoute(
-            path: '/my',
-            builder: (context, state) => const MyPageScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/my',
+                builder: (context, state) => const MyPageScreen(),
+              ),
+            ],
           ),
         ],
       ),
@@ -50,10 +59,4 @@ class AppRouter {
       ),
     ],
   );
-
-  static int indexFromLocation(String path) {
-    if (path.startsWith('/movies')) return 1;
-    if (path.startsWith('/my')) return 2;
-    return 0;
-  }
 }

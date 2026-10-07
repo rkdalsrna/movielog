@@ -3,34 +3,24 @@ import 'package:go_router/go_router.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({
-    super.key,
-    required this.currentIndex,
-    required this.child,
-  });
+  const MainScreen({super.key, required this.navigationShell});
 
-  final int currentIndex;
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: child,
+      // IndexedStack으로 선택하지 않은 탭의 화면 상태 유지
+      body: navigationShell,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
+        selectedIndex: navigationShell.currentIndex,
         indicatorColor: AppColors.navigationIndicator, //네비게이션 바 누르면 나오는 색상
         onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              context.go('/home');
-              break;
-            case 1:
-              context.go('/movies');
-              break;
-            case 2:
-              context.go('/my');
-              break;
-          }
+          // 선택한 탭의 기존 Navigation 상태로 이동
+          navigationShell.goBranch(
+            index,
+            initialLocation: index == navigationShell.currentIndex,
+          );
         },
         destinations: const [
           NavigationDestination(

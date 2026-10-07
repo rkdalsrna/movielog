@@ -3,33 +3,46 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movielog/data/mock_movies.dart';
 import 'package:movielog/models/movie.dart';
+import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MovieListScreen extends StatefulWidget {
-  const MovieListScreen({super.key, this.initialGenre});
+  const MovieListScreen({super.key, this.initialGenresQuery});
 
-  final String? initialGenre;
+  final String? initialGenresQuery;
 
   @override
   State<MovieListScreen> createState() => _MovieListScreenState();
 }
 
 class _MovieListScreenState extends State<MovieListScreen> {
-  static const _genres = ['전체', '드라마', 'SF', '애니메이션', '스릴러'];
+  static const _genres = [
+    '드라마',
+    'SF',
+    '애니메이션',
+    '스릴러',
+    '로맨스',
+    '액션',
+    '코미디',
+    '판타지',
+    '다큐멘터리',
+  ];
 
-  // Query Parameter와 일치하는 카테고리 상태
-  late String _selectedGenre;
+  // Query Parameter와 일치하는 적용 장르 상태
+  late Set<String> _selectedGenres;
 
-  String _genreFromQuery(String? genre) {
-    return genre != null && _genres.contains(genre) ? genre : _genres.first;
+  Set<String> _genresFromQuery(String? query) {
+    if (query == null || query.isEmpty) return {};
+
+    return query.split(',').where(_genres.contains).toSet();
   }
 
   @override
   void initState() {
     super.initState();
-    // 처음 전달받은 Query Parameter로 카테고리 초기화
-    _selectedGenre = _genreFromQuery(widget.initialGenre);
+    // 처음 전달받은 Query Parameter로 적용 장르 초기화
+    _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
   }
 
   @override
@@ -37,19 +50,48 @@ class _MovieListScreenState extends State<MovieListScreen> {
     super.didUpdateWidget(oldWidget);
 
     // URL의 Query Parameter 변경 시 선택 카테고리 동기화
-    if (oldWidget.initialGenre != widget.initialGenre) {
-      _selectedGenre = _genreFromQuery(widget.initialGenre);
+    if (oldWidget.initialGenresQuery != widget.initialGenresQuery) {
+      _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
     }
   }
 
-  // 선택한 카테고리에 해당하는 영화만 필터링
+  // 선택한 장르 중 하나라도 일치하는 영화를 OR 조건으로 필터링
   List<Movie> get _filteredMovies {
-    // 전체 선택 시 모든 영화 반환
-    if (_selectedGenre == _genres.first) return movies;
+    // 선택된 장르가 없으면 모든 영화 반환
+    if (_selectedGenres.isEmpty) return movies;
 
-    return movies
-        .where((movie) => movie.genre.contains(_selectedGenre))
-        .toList();
+    return movies.where((movie) {
+      return _selectedGenres.any((genre) => movie.genre.contains(genre));
+    }).toList();
+  }
+
+  Future<void> _openGenreFilter() async {
+    final selectedGenres = await showModalBottomSheet<Set<String>>(
+      context: context,
+      // ShellRoute의 하단 네비게이션까지 덮도록 루트 Navigator 사용
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return GenreFilterBottomSheet(
+          genres: _genres,
+          initialGenres: _selectedGenres,
+        );
+      },
+    );
+
+    // BottomSheet 취소 시 기존 필터 유지
+    if (selectedGenres == null || !mounted) return;
+
+    final location = Uri(
+      path: '/movies',
+      queryParameters: selectedGenres.isEmpty
+          ? null
+          : {'genre': selectedGenres.join(',')},
+    ).toString();
+
+    // 확인한 장르를 Query Parameter에 적용
+    context.go(location);
   }
 
   @override
@@ -59,21 +101,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
       child: Column(
         children: [
           const _MovieHeader(),
-          _GenreFilter(
-            genres: _genres,
-            selectedGenre: _selectedGenre,
-            onSelected: (genre) {
-              // 선택한 카테고리를 Query Parameter에 반영
-              final location = Uri(
-                path: '/movies',
-                queryParameters: genre == _genres.first
-                    ? null
-                    : {'genre': genre},
-              ).toString();
-
-              context.go(location);
-            },
-          ),
+          _FilterAction(onPressed: _openGenreFilter),
           Expanded(
             // 필터링된 영화 목록을 2열 그리드로 표시
             child: GridView.builder(
@@ -144,64 +172,33 @@ class _MovieHeader extends StatelessWidget {
   }
 }
 
-class _GenreFilter extends StatelessWidget {
-  const _GenreFilter({
-    required this.genres,
-    required this.selectedGenre,
-    required this.onSelected,
-  });
+class _FilterAction extends StatelessWidget {
+  const _FilterAction({required this.onPressed});
 
-  final List<String> genres;
-  final String selectedGenre;
-  final ValueChanged<String> onSelected;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 40,
-      // 장르 필터를 가로로 스크롤할 수 있게 배치
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: genres.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final genre = genres[index];
-          final isSelected = genre == selectedGenre;
-
-          return Align(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              // 선택한 칩의 카테고리를 부모 화면에 전달
-              onTap: () => onSelected(genre),
-              child: Container(
-                height: 32,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.statCardBackground,
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: Text(
-                  genre,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: isSelected ? AppColors.white : AppColors.gray,
-                    fontFamily: 'Manrope',
-                    fontSize: 12,
-                    height: 16 / 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+      width: double.infinity,
+      height: 48,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 23),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(8),
+            child: const SizedBox(
+              width: 18,
+              height: 12,
+              child: FittedBox(
+                fit: BoxFit.fill,
+                child: Icon(Icons.filter_list, color: AppColors.primary),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
