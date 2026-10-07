@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:movielog/theme/app_colors.dart';
 import 'package:movielog/theme/app_text_styles.dart';
 
-class Week1Screen01 extends StatelessWidget {
-  const Week1Screen01({super.key});
+class MyPageScreen extends StatelessWidget {
+  const MyPageScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +20,10 @@ class Week1Screen01 extends StatelessWidget {
           horizontal: 16,
           vertical: 24,
         ),
-        children: [ //의미 있는 위젯 분리
-          const _ProfileSection(),
-          const _StatsSection(),
-          const _GenreSection(),
+        children: const [
+          _ProfileSection(),
+          _StatsSection(),
+          _GenreSection(),
         ],
       ),
     );
@@ -35,7 +35,7 @@ class _ProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: Column(
         children: [
@@ -47,7 +47,7 @@ class _ProfileSection extends StatelessWidget {
               color: AppColors.profileImageBorder,
               shape: BoxShape.circle,
             ),
-            //프로필 이미지를 원형으로 표시
+            // 프로필 이미지를 원형으로 표시
             child: ClipOval(
               child: Image.asset(
                 'assets/images/profile/profile_movielog.jpg',
@@ -65,13 +65,13 @@ class _ProfileSection extends StatelessWidget {
             style: AppTextStyles.bodyMedium,
           ),
           const SizedBox(height: 16),
-          //프로필 수정 버튼 모양 설정
+          // 프로필 수정 버튼 모양 설정
           TextButton(
             onPressed: () {},
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
               side: const BorderSide(color: AppColors.primary),
-              minimumSize: const Size(127, 50),
+              minimumSize: const Size(127, 42),
               padding: const EdgeInsets.symmetric(horizontal: 24),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -88,31 +88,32 @@ class _ProfileSection extends StatelessWidget {
   }
 }
 
-
 class _StatsSection extends StatelessWidget {
   const _StatsSection();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 32), //위 아래 32 여백
-      //통계 카드 3개를 같은 너비로 배치
-      child: const Row(
-        children: [
-          Expanded(child: _StatCard(label: '본 영화', value: '342')),
-          SizedBox(width: 8),
-          //평점 카드만 다른 테두리 색상 적용
-          Expanded(
-            child: _StatCard(
-              label: '평점',
-              value: '4.2',
-              borderColor: AppColors.lavender,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        // 통계 카드 3개를 같은 너비로 배치
+        child: const Row(
+          children: [
+            Expanded(child: _StatCard(label: '본 영화', value: '342')),
+            SizedBox(width: 8),
+            // 평점 카드만 다른 테두리 색상 적용
+            Expanded(
+              child: _StatCard(
+                label: '평점',
+                value: '4.2',
+                borderColor: AppColors.lavender,
+              ),
             ),
-          ),
-          SizedBox(width: 8),
-          Expanded(child: _StatCard(label: '즐겨찾기', value: '58')),
-        ],
+            SizedBox(width: 8),
+            Expanded(child: _StatCard(label: '즐겨찾기', value: '58')),
+          ],
+        ),
       ),
     );
   }
@@ -133,9 +134,9 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 86,
-      //통계 카드 공통 배경과 테두리
+      // 통계 카드 공통 배경과 테두리
       decoration: BoxDecoration(
-        color: AppColors.statCardBackground,
+        color: AppColors.profileStatCardBackground,
         border: Border.all(color: borderColor),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -163,14 +164,14 @@ class _GenreSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('선호하는 장르', style: AppTextStyles.titleMedium),
           SizedBox(height: 16),
-          //칩이 넘치면 다음 줄로 배치
+          // 칩이 넘치면 다음 줄로 배치
           Wrap(
             spacing: 8,
             runSpacing: 8,

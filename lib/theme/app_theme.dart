@@ -38,5 +38,8 @@ abstract final class AppTheme {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
     ),
+    navigationBarTheme: const NavigationBarThemeData(
+      indicatorColor: AppColors.navigationIndicator,
+    ),
   );
 }
