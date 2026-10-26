@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:movielog/models/movie.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid_card.dart';
 
 class MovieGrid extends StatelessWidget {
   const MovieGrid({
     super.key,
     required this.movies,
+    required this.genreNames,
     required this.onMoviePressed,
   });
 
-  final List<Movie> movies;
-  final ValueChanged<Movie> onMoviePressed;
+  final List<TmdbMovieDto> movies;
+  final Map<int, String> genreNames;
+  final ValueChanged<TmdbMovieDto> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
+      //영화가 적어도 당겨서 새로고침 가능
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
       itemCount: movies.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -26,7 +30,11 @@ class MovieGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final movie = movies[index];
 
-        return MovieGridCard(movie: movie, onTap: () => onMoviePressed(movie));
+        return MovieGridCard(
+          movie: movie,
+          genreNames: genreNames,
+          onTap: () => onMoviePressed(movie),
+        );
       },
     );
   }

@@ -3,8 +3,14 @@ import 'package:movielog/screens/movie/widgets/movie_rating_input.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class RatingDialog extends StatefulWidget {
-  const RatingDialog({super.key, this.initialRating = 0});
+  const RatingDialog({
+    super.key,
+    required this.movieId,
+    this.initialRating = 0,
+  });
 
+  //평점을 남길 TMDB 영화 ID
+  final int movieId;
   final double initialRating;
 
   @override

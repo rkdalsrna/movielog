@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:movielog/models/movie.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
+import 'package:movielog/widgets/tmdb_poster_image.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 class MovieGridCard extends StatelessWidget {
   const MovieGridCard({
     super.key,
     required this.movie,
+    required this.genreNames,
     required this.onTap,
   });
 
-  final Movie movie;
+  final TmdbMovieDto movie;
+  final Map<int, String> genreNames;
   final VoidCallback onTap;
 
   @override
@@ -17,7 +20,7 @@ class MovieGridCard extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 316.5,
-      // 카드 전체 영역을 상세 화면 이동용 터치 영역으로 사용
+      //카드 전체 영역을 상세 화면 이동용 터치 영역으로 사용
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -32,9 +35,14 @@ class MovieGridCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(movie.posterAsset, fit: BoxFit.cover),
+                    //포스터 표시 및 이미지 오류 처리
+                    TmdbPosterImage(
+                      posterPath: movie.posterPath,
+                      width: double.infinity,
+                      height: 256.5,
+                    ),
                     Positioned(
-                      // 포스터 내부 오른쪽 위에 평점 표시
+                      //포스터 내부 오른쪽 위에 평점 표시
                       top: 8,
                       right: 8,
                       child: Container(
@@ -55,7 +63,7 @@ class MovieGridCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 2),
                             Text(
-                              movie.rating.toStringAsFixed(1),
+                              movie.voteAverage.toStringAsFixed(1),
                               style: const TextStyle(
                                 color: AppColors.white,
                                 fontFamily: 'Manrope',
@@ -86,7 +94,13 @@ class MovieGridCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${movie.year} · ${movie.genre}',
+              [
+                if (movie.releaseDate != null && movie.releaseDate!.length >= 4)
+                  movie.releaseDate!.substring(0, 4),
+                ...movie.genreIds
+                    .map((id) => genreNames[id])
+                    .whereType<String>(),
+              ].join(' · '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
