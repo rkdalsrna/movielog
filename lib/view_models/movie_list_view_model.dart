@@ -57,7 +57,7 @@ class MovieListViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      genres = await _service.fetchGenres();
+      genres = await _service.fetchGenres(); //장르 목록을 가져오기
       final discovered = await fetchUpToThirtyMovies();
 
       //해제된 ViewModel이거나 이전 요청이면 결과 무시

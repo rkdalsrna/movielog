@@ -24,7 +24,7 @@ class MovieListScreen extends StatefulWidget {
 class _MovieListScreenState extends State<MovieListScreen> {
   static final _genrePreference = GenrePreference();
 
-  //장르 이름은 API가 반환한 목록을 사용
+  //장르 이름은 API가 반환한 목록을 사용, _genres에서 이름만 추출
   List<String> get _genres => context
       .read<MovieListViewModel>()
       .genres
