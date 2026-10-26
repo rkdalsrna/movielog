@@ -13,26 +13,38 @@ class MovieHomeViewModel extends ChangeNotifier {
   List<TmdbMovieDto> popularMovies = const [];
   MovieHomeLoadStatus status = MovieHomeLoadStatus.idle;
   String? message;
+  bool _disposed = false;
+  int _requestVersion = 0;
 
   //인기 영화를 조회하고 최대 5개 저장
   Future<void> loadPopular() async {
+    final version = ++_requestVersion;
     //로딩 상태를 화면에 전달
     status = MovieHomeLoadStatus.loading;
     notifyListeners();
 
     try {
       final page = await _service.fetchPopular();
-      popularMovies = page.results.take(5).toList();
+      if (_disposed || version != _requestVersion) return;
+      popularMovies = page.results.take(5).toList(); //인기 영화 5개를 가져오기, 메인 1개 + 목록 5개 = 총 6개
       status = popularMovies.isEmpty
           ? MovieHomeLoadStatus.empty
           : MovieHomeLoadStatus.success;
     } on DioException {
+      if (_disposed || version != _requestVersion) return;
       //통신 실패 시 오류 상태와 안내 문구 설정
       status = MovieHomeLoadStatus.error;
       message = '인기 영화를 불러오지 못했어요.';
     }
 
     //조회 결과를 구독 중인 화면에 전달
-    notifyListeners();
+    if (!_disposed && version == _requestVersion) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _requestVersion++;
+    super.dispose();
   }
 }

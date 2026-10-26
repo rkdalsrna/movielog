@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:movielog/data/mock_movies.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
+import 'package:movielog/widgets/tmdb_poster_image.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 // 추천 메인 영화
@@ -8,8 +9,10 @@ class FeaturedMovieSection extends StatelessWidget {
   const FeaturedMovieSection({
     super.key,
     required this.onDetailPressed,
+    required this.movie,
   });
 
+  final TmdbMovieDto movie;
   final VoidCallback onDetailPressed;
 
   @override
@@ -19,15 +22,22 @@ class FeaturedMovieSection extends StatelessWidget {
       height: 558,
       child: Padding(
         padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
-        child: _FeaturedMovieCard(onDetailPressed: onDetailPressed),
+        child: _FeaturedMovieCard(
+          movie: movie,
+          onDetailPressed: onDetailPressed,
+        ),
       ),
     );
   }
 }
 
 class _FeaturedMovieCard extends StatelessWidget {
-  const _FeaturedMovieCard({required this.onDetailPressed});
+  const _FeaturedMovieCard({
+    required this.movie,
+    required this.onDetailPressed,
+  });
 
+  final TmdbMovieDto movie;
   final VoidCallback onDetailPressed;
 
   @override
@@ -41,9 +51,10 @@ class _FeaturedMovieCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              featuredMovie.posterAsset,
-              fit: BoxFit.cover,
+            TmdbPosterImage(
+              posterPath: movie.posterPath,
+              width: double.infinity,
+              height: 534,
             ),
             // 흰색 글자가 잘 보이도록 포스터 전체를 어둡게 처리
             const ColoredBox(color: AppColors.heroOverlay),
@@ -57,7 +68,7 @@ class _FeaturedMovieCard extends StatelessWidget {
                   const _RecommendationBadge(),
                   const SizedBox(height: 8),
                   Text(
-                    featuredMovie.title,
+                    movie.title,
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       color: AppColors.white,
@@ -69,7 +80,7 @@ class _FeaturedMovieCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${featuredMovie.genre} · ${featuredMovie.runningTime}분',
+                    movie.releaseDate ?? '',
                     style: const TextStyle(
                       fontFamily: 'Manrope',
                       color: AppColors.white,
@@ -133,7 +144,7 @@ class _RecommendationBadge extends StatelessWidget {
         border: Border.all(color: AppColors.profileImageBorder),
       ),
       child: const Text(
-        '추천 신작',
+        '추천 영화',
         style: TextStyle(
           fontFamily: 'Manrope',
           color: AppColors.white,

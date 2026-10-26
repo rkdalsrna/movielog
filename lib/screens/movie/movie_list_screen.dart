@@ -166,7 +166,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
                   viewModel,
                 );
                 //요청 상태에 따라 로딩·오류·빈 목록·영화 목록 표시
-                return switch (viewModel.status) {
+                final content = switch (viewModel.status) {
                   MovieListLoadStatus.idle ||
                   MovieListLoadStatus.loading => const MovieListLoading(),
                   MovieListLoadStatus.error => MovieListError(
@@ -189,6 +189,22 @@ class _MovieListScreenState extends State<MovieListScreen> {
                             },
                           ),
                 };
+                //아래로 당기면 장르와 영화 목록 다시 조회
+                return RefreshIndicator(
+                  onRefresh: () => viewModel.loadInitial(),
+                  child: content is MovieGrid
+                      ? content
+                      //로딩·오류·빈 목록에서도 화면을 당길 수 있도록 스크롤 제공
+                      : CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: content,
+                            ),
+                          ],
+                        ),
+                );
               },
             ),
           ),

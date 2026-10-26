@@ -37,7 +37,7 @@ class TmdbPosterImage extends StatelessWidget {
       height: height,
       fit: fit,
       //이미지 요청 실패 시 대체 아이콘 표시
-      errorBuilder: (_, __, ___) => _placeholder(),
+      errorBuilder: (_, _, _) => _placeholder(),
     );
   }
 

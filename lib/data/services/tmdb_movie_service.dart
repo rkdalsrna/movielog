@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:movielog/models/movie.dart';
 import 'package:movielog/data/models/tmdb_genre_dto.dart';
 import 'package:movielog/data/models/tmdb_movie_page.dart';
 
@@ -14,9 +15,7 @@ class TmdbMovieService {
       queryParameters: {'language': 'ko-KR', 'page': page},
     );
     //JSON 응답을 영화 페이지 객체로 변환
-    return TmdbMoviePageDto.fromJson(
-      response.data as Map<String, dynamic>,
-    );
+    return TmdbMoviePageDto.fromJson(response.data as Map<String, dynamic>);
   }
 
   //영화 목록 조회, 장르 조건 전달
@@ -33,12 +32,37 @@ class TmdbMovieService {
         'include_adult': false,
         'include_video': false,
         //장르를 선택한 경우에만 검색 조건에 포함
-        if (genreId != null) 'with_genres': genreId,
+        'with_genres': ?genreId,
       },
     );
     //JSON 응답을 영화 페이지 객체로 변환
-    return TmdbMoviePageDto.fromJson(
-      response.data as Map<String, dynamic>,
+    return TmdbMoviePageDto.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  //영화 ID로 상세 정보 조회
+  Future<Movie> fetchMovieDetail(int movieId) async {
+    final response = await _dio.get(
+      '/movie/$movieId',
+      queryParameters: {'language': 'ko-KR'},
+    );
+    final data = response.data as Map<String, dynamic>;
+    final date = data['release_date'] as String? ?? '';
+    final posterPath = data['poster_path'] as String?;
+    final genres = data['genres'] as List<dynamic>? ?? const [];
+    return Movie(
+      id: (data['id'] as num).toInt(),
+      title: data['title'] as String? ?? '제목 없음',
+      genre: genres
+          .map((item) => (item as Map<String, dynamic>)['name'] as String)
+          .join(' · '),
+      year: date.length >= 4 ? int.tryParse(date.substring(0, 4)) ?? 0 : 0,
+      runningTime: (data['runtime'] as num? ?? 0).toInt(),
+      posterAsset: posterPath == null
+          ? ''
+          : 'https://image.tmdb.org/t/p/w500$posterPath',
+      //상세 화면의 별점은 5점 기준으로 변환
+      rating: (data['vote_average'] as num? ?? 0).toDouble() / 2,
+      synopsis: data['overview'] as String? ?? '',
     );
   }
 
