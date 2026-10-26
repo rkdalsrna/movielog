@@ -24,20 +24,20 @@ class MovieHomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final page = await _service.fetchPopular();
-      if (_disposed || version != _requestVersion) return;
-      popularMovies = page.results.take(5).toList(); //인기 영화 5개를 가져오기, 메인 1개 + 목록 5개 = 총 6개
+      final page = await _service.fetchPopular(); //TMDB 인기 영화 API를 호출하고 응답을 기다림
+      if (_disposed || version != _requestVersion) return; //이미 필요 없어진 API 응답이 ViewModel의 상태를 변경하지 못하도록 방지하는 코드
+      popularMovies = page.results.take(5).toList(); //인기 영화 목록에서 상위 5개만 저장
       status = popularMovies.isEmpty
-          ? MovieHomeLoadStatus.empty
-          : MovieHomeLoadStatus.success;
-    } on DioException {
-      if (_disposed || version != _requestVersion) return;
+          ? MovieHomeLoadStatus.empty //비어있으면
+          : MovieHomeLoadStatus.success; //하나 이상 있으면
+    } on DioException { //Dio에서 발생한 네트워크 관련 예외를 처리
+      if (_disposed || version != _requestVersion) return; //_disposed와 요청 버전을 검사
       //통신 실패 시 오류 상태와 안내 문구 설정
       status = MovieHomeLoadStatus.error;
       message = '인기 영화를 불러오지 못했어요.';
     }
 
-    //조회 결과를 구독 중인 화면에 전달
+    //조회 결과를 구독 중인 화면에 전달, _disposed가 아닌 경우 + 요청 버전이 동일한 경우
     if (!_disposed && version == _requestVersion) notifyListeners();
   }
 

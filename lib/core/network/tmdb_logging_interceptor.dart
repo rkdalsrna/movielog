@@ -26,6 +26,8 @@ class TmdbLoggingInterceptor extends Interceptor { //API 요청과 응답을 확
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    //인증 실패 등 오류 응답의 상태 코드 확인
+    debugPrint('[TMDB 오류 Status] ${err.response?.statusCode ?? '응답 없음'}');
     debugPrint('[TMDB 오류] ${err.requestOptions.uri}');
     debugPrint('[TMDB 오류 내용] ${err.message}');
     handler.next(err);

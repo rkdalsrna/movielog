@@ -48,13 +48,13 @@ class HomeScreen extends StatelessWidget {
                         FeaturedMovieSection(
                           movie: viewModel
                               .popularMovies
-                              .first, //TMDB 인기 영화 목록의 첫 번째 영화
+                              .first, //인기 영화 중 첫 번째 영화를 메인에 표시
                           onDetailPressed: () => context.push(
-                            '/movies/${viewModel.popularMovies.first.id}',
+                            '/movies/${viewModel.popularMovies.first.id}', //해당 영화의 상세 화면으로 이동
                           ),
                         ),
                         PopularMoviesSection(
-                          movies: viewModel.popularMovies,
+                          movies: viewModel.popularMovies, //추린 인기 영화 5개를 목록에 전달
                           onViewAllPressed: () => context.go('/movies'),
                           onMoviePressed: (movie) =>
                               context.push('/movies/${movie.id}'),

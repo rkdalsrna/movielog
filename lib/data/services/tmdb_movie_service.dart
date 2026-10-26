@@ -35,7 +35,7 @@ class TmdbMovieService {
         'with_genres': ?genreId,
       },
     );
-    //JSON 응답을 영화 페이지 객체로 변환
+    //JSON 응답을 영화 페이지 객체로 변환 ,API 응답을 DTO로 변환
     return TmdbMoviePageDto.fromJson(response.data as Map<String, dynamic>);
   }
 
