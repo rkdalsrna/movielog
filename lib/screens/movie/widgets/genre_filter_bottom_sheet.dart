@@ -47,11 +47,10 @@ class _GenreFilterBottomSheetState extends State<GenreFilterBottomSheet> {
       snapSizes: const [0.45, 0.85],
       expand: false,
       builder: (context, scrollController) {
-        return DecoratedBox(
-          decoration: const BoxDecoration(
-            color: AppColors.warmWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
+        return Material(
+          color: AppColors.warmWhite,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
           child: Column(
             children: [
               Expanded(
@@ -185,7 +184,8 @@ class _FilterHeader extends StatelessWidget {
 class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
   const _FilterHeaderDelegate();
 
-  static const double _height = 79;
+  // 폰트 렌더링 높이를 포함한 고정 헤더 영역
+  static const double _height = 84;
 
   @override
   double get minExtent => _height;
