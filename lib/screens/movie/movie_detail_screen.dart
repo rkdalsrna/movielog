@@ -57,7 +57,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final rating = await showDialog<double>(
       context: context,
       builder: (context) {
-        return RatingDialog(initialRating: _userRating ?? 0);
+        return RatingDialog(
+          movieId: movie.id, //상세 조회한 TMDB 영화 ID 전달
+          initialRating: _userRating ?? 0,
+        );
       },
     );
 
