@@ -52,7 +52,7 @@ class _FeaturedMovieCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             TmdbPosterImage(
-              posterPath: movie.posterPath,
+              posterPath: movie.posterPath, //TMDB 응답의 포스터 경로 전달
               width: double.infinity,
               height: 534,
             ),

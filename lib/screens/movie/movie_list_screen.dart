@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:movielog/data/models/tmdb_movie_dto.dart';
 import 'package:movielog/view_models/movie_list_view_model.dart';
 import 'package:movielog/preferences/genre_preference.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
@@ -48,13 +48,18 @@ class _MovieListScreenState extends State<MovieListScreen> {
     _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
 
     //Query Parameter가 없으면 마지막 선택 장르 복원
-    _restoreSelectedGenres();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _restoreSelectedGenres();
+      if (mounted) _syncGenreRequest();
+    });
   }
 
   Future<void> _restoreSelectedGenres() async {
     //URL에 장르가 있으면 Query Parameter 우선 사용
     if (_selectedGenres.isNotEmpty) return;
 
+    final selectionBeforeRead = Set<String>.of(_selectedGenres);
     Set<String> savedGenres;
 
     try {
@@ -68,7 +73,11 @@ class _MovieListScreenState extends State<MovieListScreen> {
     final validGenres = savedGenres;
 
     //저장된 장르가 없거나 화면이 사라지면 복원 중단
-    if (validGenres.isEmpty || !mounted) return;
+    if (validGenres.isEmpty ||
+        !mounted ||
+        !setEquals(selectionBeforeRead, _selectedGenres)) {
+      return;
+    }
 
     //저장된 장르를 화면 상태에 복원
     setState(() => _selectedGenres = validGenres);
@@ -89,27 +98,31 @@ class _MovieListScreenState extends State<MovieListScreen> {
     //URL의 Query Parameter 변경 시 선택 카테고리 동기화
     if (oldWidget.initialGenresQuery != widget.initialGenresQuery) {
       _selectedGenres = _genresFromQuery(widget.initialGenresQuery);
+      //URL에서 장르가 변경돼도 서버에 다시 요청
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncGenreRequest();
+      });
     }
   }
 
-  //선택한 장르 중 하나라도 일치하는 영화를 OR 조건으로 필터링
-  List<TmdbMovieDto> _filterMovies(
-    List<TmdbMovieDto> loadedMovies,
-    MovieListViewModel viewModel,
-  ) {
-    if (_selectedGenres.isEmpty) return loadedMovies;
-
-    //선택한 장르 이름을 ID로 변환해 하나라도 일치하는 영화 표시
-    final selectedIds = viewModel.genres
-        .where((genre) => _selectedGenres.contains(genre.name))
-        .map((genre) => genre.id)
-        .toSet();
-    return loadedMovies
-        .where((movie) => movie.genreIds.any(selectedIds.contains))
-        .toList();
+  //초기 진입과 장르 변경 시에만 API 요청
+  void _syncGenreRequest() {
+    final viewModel = context.read<MovieListViewModel>();
+    if (viewModel.status != MovieListLoadStatus.idle &&
+        setEquals(viewModel.selectedGenreNames, _selectedGenres)) {
+      return;
+    }
+    viewModel.selectGenres(_selectedGenres);
   }
 
   Future<void> _openGenreFilter() async {
+    //요청 전과 요청 중에는 장르 선택 차단
+    final status = context.read<MovieListViewModel>().status;
+    if (status == MovieListLoadStatus.idle ||
+        status == MovieListLoadStatus.loading) {
+      return;
+    }
+
     final selectedGenres = await showModalBottomSheet<Set<String>>(
       context: context,
       //ShellRoute의 하단 네비게이션까지 덮도록 루트 Navigator 사용
@@ -118,17 +131,23 @@ class _MovieListScreenState extends State<MovieListScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return GenreFilterBottomSheet(
-          genres: _genres,
-          initialGenres: _selectedGenres,
+          genres: _genres, //API에서 받은 장르 이름을 선택 항목으로 전달
+          initialGenres: _selectedGenres, //기존 선택 장르 전달
         );
       },
     );
 
     //BottomSheet 취소 시 기존 필터 유지
     if (selectedGenres == null || !mounted) return;
+    //선택창이 열린 동안 요청이 시작되면 변경 적용 차단
+    if (context.read<MovieListViewModel>().status ==
+        MovieListLoadStatus.loading) {
+      return;
+    }
 
     //저장 결과를 기다리지 않고 선택 장르를 화면에 먼저 적용
     setState(() => _selectedGenres = selectedGenres);
+    _syncGenreRequest();
 
     final location = Uri(
       path: '/movies',
@@ -156,27 +175,38 @@ class _MovieListScreenState extends State<MovieListScreen> {
       child: Column(
         children: [
           const _MovieHeader(),
-          _FilterAction(onPressed: _openGenreFilter),
+          Consumer<MovieListViewModel>(
+            builder: (context, viewModel, child) {
+              //요청이 끝나면 장르 필터 버튼 활성화
+              final isLoading =
+                  viewModel.status == MovieListLoadStatus.idle ||
+                  viewModel.status == MovieListLoadStatus.loading;
+              return Opacity(
+                opacity: isLoading ? 0.4 : 1,
+                child: _FilterAction(
+                  onPressed: isLoading ? null : _openGenreFilter,
+                ),
+              );
+            },
+          ),
           Expanded(
             //ViewModel의 상태 변경을 구독해 목록 영역 갱신
             child: Consumer<MovieListViewModel>(
               builder: (context, viewModel, child) {
-                final filteredMovies = _filterMovies(
-                  viewModel.movies,
-                  viewModel,
-                );
+                //서버에서 장르 필터링한 결과를 그대로 표시
+                final filteredMovies = viewModel.movies;
                 //요청 상태에 따라 로딩·오류·빈 목록·영화 목록 표시
                 final content = switch (viewModel.status) {
-                  MovieListLoadStatus.idle ||
-                  MovieListLoadStatus.loading => const MovieListLoading(),
+                  MovieListLoadStatus.idle || MovieListLoadStatus.loading =>
+                    const MovieListLoading(), //로딩 표시
                   MovieListLoadStatus.error => MovieListError(
-                    message: viewModel.message,
-                    onRetry: () => viewModel.loadInitial(),
+                    message: viewModel.message, //오류 안내 문구
+                    onRetry: () => viewModel.loadInitial(), //재시도 시 API 다시 호출
                   ),
-                  MovieListLoadStatus.empty => const MovieListEmpty(),
+                  MovieListLoadStatus.empty => const MovieListEmpty(), //빈 목록 안내
                   MovieListLoadStatus.success =>
                     filteredMovies.isEmpty
-                        ? const MovieListEmpty()
+                        ? const MovieListEmpty() //장르 필터 결과가 없어도 빈 목록 표시
                         : MovieGrid(
                             movies: filteredMovies,
                             //카드에 표시할 장르 ID와 이름 연결
@@ -259,7 +289,7 @@ class _MovieHeader extends StatelessWidget {
 class _FilterAction extends StatelessWidget {
   const _FilterAction({required this.onPressed});
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

@@ -21,18 +21,18 @@ class TmdbMovieService {
   //영화 목록 조회, 장르 조건 전달
   Future<TmdbMoviePageDto> discoverMovies({
     required int page,
-    int? genreId,
+    List<int> genreIds = const [],
   }) async {
     final response = await _dio.get(
-      '/discover/movie',
+      '/discover/movie', //Discover API 호출
       queryParameters: {
         'language': 'ko-KR',
-        'page': page,
-        'sort_by': 'popularity.desc',
+        'page': page, //ViewModel에서 전달한 페이지 번호 사용
+        'sort_by': 'popularity.desc', //인기순 조회
         'include_adult': false,
         'include_video': false,
         //장르를 선택한 경우에만 검색 조건에 포함
-        'with_genres': ?genreId,
+        if (genreIds.isNotEmpty) 'with_genres': genreIds.join('|'),
       },
     );
     //JSON 응답을 영화 페이지 객체로 변환 ,API 응답을 DTO로 변환

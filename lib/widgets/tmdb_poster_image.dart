@@ -21,23 +21,22 @@ class TmdbPosterImage extends StatelessWidget {
 
   //포스터 경로를 TMDB 이미지 주소로 변환
   String? get _imageUrl {
-    if (posterPath == null || posterPath!.isEmpty) return null;
-    return '$_baseUrl/$_size$posterPath';
+    if (posterPath == null || posterPath!.isEmpty) return null; //포스터 경로가 없으면 null 반환
+    return '$_baseUrl/$_size$posterPath'; //기본 주소와 이미지 크기, 포스터 경로 결합
   }
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = _imageUrl;
 
-    if (imageUrl == null) return _placeholder();
+    if (imageUrl == null) return _placeholder(); //포스터가 없으면 대체 아이콘 표시
 
     return Image.network(
-      imageUrl,
+      imageUrl, //실제 TMDB 포스터 이미지 요청
       width: width,
       height: height,
       fit: fit,
-      //이미지 요청 실패 시 대체 아이콘 표시
-      errorBuilder: (_, _, _) => _placeholder(),
+      errorBuilder: (_, _, _) => _placeholder(), //이미지 요청 실패 시 대체 아이콘 표시
     );
   }
 

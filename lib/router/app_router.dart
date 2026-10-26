@@ -26,14 +26,14 @@ class AppRouter {
                 path: '/home',
                 builder: (context, state) =>
                     ChangeNotifierProvider<MovieHomeViewModel>(
-                  //공통 서비스를 주입하고 인기 영화 초기 조회
-                  //하위 화면에서 ViewModel을 처음 읽을 때 생성
-                  create: (context) => MovieHomeViewModel(
-                    context.read<TmdbMovieService>(),
-                  )..loadPopular(),
-                  //홈 화면 하위에 ViewModel 제공
-                  child: const HomeScreen(),
-                ),
+                      //공통 서비스를 주입하고 인기 영화 초기 조회
+                      //하위 화면에서 ViewModel을 처음 읽을 때 생성
+                      create: (context) =>
+                          MovieHomeViewModel(context.read<TmdbMovieService>())
+                            ..loadPopular(),
+                      //홈 화면 하위에 ViewModel 제공
+                      child: const HomeScreen(),
+                    ),
               ),
             ],
           ),
@@ -43,10 +43,9 @@ class AppRouter {
                 path: '/movies',
                 builder: (context, state) {
                   return ChangeNotifierProvider<MovieListViewModel>(
-                    //공통 서비스를 주입하고 장르와 영화 목록 초기 조회
-                    create: (context) => MovieListViewModel(
-                      context.read<TmdbMovieService>(),
-                    )..loadInitial(),
+                    //공통 서비스를 주입하고 초기 조회는 화면에서 장르 복원 후 실행
+                    create: (context) =>
+                        MovieListViewModel(context.read<TmdbMovieService>()),
                     //Query Parameter의 장르를 영화 목록 화면에 전달
                     child: MovieListScreen(
                       initialGenresQuery: state.uri.queryParameters['genre'],
