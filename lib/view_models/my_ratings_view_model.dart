@@ -48,7 +48,7 @@ class MyRatingsViewModel extends ChangeNotifier {
         }
         final movie = _movieCache[rating.movieId];
         if (movie == null) missingMovies++;
-        entries.add(RatingWithMovie(rating: rating, movie: movie));
+        entries.add(RatingWithMovie(rating: rating, movie: movie)); //하나의 객체로 묶어서 리스트에 추가
       }
       if (_disposed || version != _requestVersion) return;
       ratings = entries;
