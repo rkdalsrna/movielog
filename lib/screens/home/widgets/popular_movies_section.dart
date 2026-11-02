@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:movielog/data/mock_movies.dart';
-import 'package:movielog/models/movie.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
+import 'package:movielog/widgets/tmdb_poster_image.dart';
 import 'package:movielog/theme/app_colors.dart';
 
 // 인기 영화 목록
 class PopularMoviesSection extends StatelessWidget {
   const PopularMoviesSection({
     super.key,
+    required this.movies,
     required this.onViewAllPressed,
     required this.onMoviePressed,
   });
 
+  final List<TmdbMovieDto> movies;
   final VoidCallback onViewAllPressed;
-  final ValueChanged<Movie> onMoviePressed;
+  final ValueChanged<TmdbMovieDto> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +28,7 @@ class PopularMoviesSection extends StatelessWidget {
           children: [
             _PopularMoviesHeader(onViewAllPressed: onViewAllPressed),
             const SizedBox(height: 10),
-            _PopularMovieList(onMoviePressed: onMoviePressed),
+            _PopularMovieList(movies: movies, onMoviePressed: onMoviePressed),
           ],
         ),
       ),
@@ -74,11 +76,7 @@ class _PopularMoviesHeader extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
+                Icon(Icons.chevron_right, size: 20, color: AppColors.primary),
               ],
             ),
           ),
@@ -89,9 +87,11 @@ class _PopularMoviesHeader extends StatelessWidget {
 }
 
 class _PopularMovieList extends StatelessWidget {
-  const _PopularMovieList({required this.onMoviePressed});
+  const _PopularMovieList({required this.movies, required this.onMoviePressed});
 
-  final ValueChanged<Movie> onMoviePressed;
+  final List<TmdbMovieDto> movies;
+
+  final ValueChanged<TmdbMovieDto> onMoviePressed;
 
   @override
   Widget build(BuildContext context) {
@@ -100,14 +100,14 @@ class _PopularMovieList extends StatelessWidget {
       // 인기 영화를 가로로 스크롤할 수 있게 배치
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: popularMovies.length,
+        itemCount: movies.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           return _PopularMovieCard(
             // 목록의 순서를 포스터 순위로 사용
             rank: index + 1,
-            movie: popularMovies[index],
-            onTap: () => onMoviePressed(popularMovies[index]),
+            movie: movies[index],
+            onTap: () => onMoviePressed(movies[index]),
           );
         },
       ),
@@ -123,7 +123,7 @@ class _PopularMovieCard extends StatelessWidget {
   });
 
   final int rank;
-  final Movie movie;
+  final TmdbMovieDto movie;
   final VoidCallback onTap;
 
   @override
@@ -145,9 +145,10 @@ class _PopularMovieCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.asset(
-                      movie.posterAsset,
-                      fit: BoxFit.cover,
+                    TmdbPosterImage(
+                      posterPath: movie.posterPath,
+                      width: 140,
+                      height: 200,
                     ),
                     Positioned(
                       // 순위 라벨을 포스터 내부 왼쪽 위에 배치
@@ -210,7 +211,7 @@ class _PopularMovieCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 3),
                   Text(
-                    movie.rating.toStringAsFixed(1),
+                    movie.voteAverage.toStringAsFixed(1),
                     style: const TextStyle(
                       color: AppColors.gray,
                       fontFamily: 'Manrope',

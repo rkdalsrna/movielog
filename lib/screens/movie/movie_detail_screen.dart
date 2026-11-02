@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:movielog/data/mock_movies.dart';
+import 'package:provider/provider.dart';
+import 'package:movielog/data/services/tmdb_movie_service.dart';
+import 'package:movielog/screens/movie/widgets/movie_list_loading.dart';
+import 'package:movielog/screens/movie/widgets/movie_list_error.dart';
 import 'package:movielog/models/movie.dart';
 import 'package:movielog/screens/movie/widgets/rating_dialog.dart';
 import 'package:movielog/theme/app_colors.dart';
@@ -17,6 +20,32 @@ class MovieDetailScreen extends StatefulWidget {
 }
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
+  late Future<Movie?> _movieFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMovie();
+  }
+
+  @override
+  void didUpdateWidget(covariant MovieDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.movieId != widget.movieId) {
+      _isBookmarked = false;
+      _userRating = null;
+      _loadMovie();
+    }
+  }
+
+  //상세 API 요청을 저장해 화면 갱신 시 중복 호출 방지
+  void _loadMovie() {
+    final id = widget.movieId;
+    _movieFuture = id == null
+        ? Future<Movie?>.value(null)
+        : context.read<TmdbMovieService>().fetchMovieDetail(id);
+  }
+
   // 즐겨찾기 선택 상태
   bool _isBookmarked = false;
 
@@ -28,7 +57,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     final rating = await showDialog<double>(
       context: context,
       builder: (context) {
-        return RatingDialog(initialRating: _userRating ?? 0);
+        return RatingDialog(
+          movieId: movie.id, //상세 조회한 TMDB 영화 ID 전달
+          initialRating: _userRating ?? 0,
+        );
       },
     );
 
@@ -47,9 +79,27 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Route로 전달받은 ID에 해당하는 영화 조회
-    final movie = findMovieById(widget.movieId);
+    return FutureBuilder<Movie?>(
+      future: _movieFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            appBar: _DetailAppBar(onBackPressed: () => context.pop()),
+            body: const MovieListLoading(),
+          );
+        }
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: _DetailAppBar(onBackPressed: () => context.pop()),
+            body: MovieListError(onRetry: () => setState(_loadMovie)),
+          );
+        }
+        return _buildMovie(context, snapshot.data);
+      },
+    );
+  }
 
+  Widget _buildMovie(BuildContext context, Movie? movie) {
     // 일치하는 영화가 없을 때 예외 화면 표시
     if (movie == null) {
       return Scaffold(
@@ -71,15 +121,19 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(
+            Image.network(
               movie.posterAsset,
+              errorBuilder: (_, error, stackTrace) => const SizedBox(
+                height: 585,
+                child: Center(child: Icon(Icons.image_not_supported_outlined)),
+              ),
               width: double.infinity,
               height: 585,
               fit: BoxFit.cover,
             ),
             _MovieInformation(
               movie: movie,
-              // 저장한 별점이 없으면 Mock 평점 표시
+              //저장한 별점이 없으면 API 평점 표시
               displayedRating: _userRating ?? movie.rating,
             ),
           ],
@@ -162,7 +216,7 @@ class _MovieInformation extends StatelessWidget {
     // 시놉시스가 없는 영화의 기본 설명 사용
     final synopsis = movie.synopsis.isNotEmpty
         ? movie.synopsis
-        : '영화 속 인물들이 서로의 상처를 이해하며 새로운 여정을 시작하는 이야기입니다.';
+        : '등록된 줄거리가 없습니다.';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
@@ -265,19 +319,6 @@ class _RatingSummary extends StatelessWidget {
             fontWeight: FontWeight.w500,
             fontStyle: FontStyle.normal,
             letterSpacing: 0.15,
-          ),
-        ),
-        const SizedBox(width: 4),
-        const Text(
-          '(1,245)',
-          style: TextStyle(
-            color: AppColors.gray,
-            fontFamily: 'Manrope',
-            fontSize: 14,
-            height: 20 / 14,
-            fontWeight: FontWeight.w400,
-            fontStyle: FontStyle.normal,
-            letterSpacing: 0.25,
           ),
         ),
       ],
