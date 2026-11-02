@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:movielog/theme/app_colors.dart';
 import 'package:movielog/theme/app_text_styles.dart';
 
@@ -10,20 +11,31 @@ class MyPageScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
-        title: const Text(
-          '내 프로필',
-          style: AppTextStyles.appBarTitle,
-        ),
+        title: const Text('내 프로필', style: AppTextStyles.appBarTitle),
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 24,
-        ),
-        children: const [
-          _ProfileSection(),
-          _StatsSection(),
-          _GenreSection(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        children: [
+          const _ProfileSection(),
+          const _StatsSection(),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/register'),
+            icon: const Icon(Icons.login),
+            label: const Text('로그인 (임시)'),
+          ),
+          const SizedBox(height: 16),
+          ListTile(
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: AppColors.primary),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            title: const Text('내가 등록한 평점'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/my/ratings'),
+          ),
+          const SizedBox(height: 28),
+          const _GenreSection(),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -100,7 +112,9 @@ class _StatsSection extends StatelessWidget {
         // 통계 카드 3개를 같은 너비로 배치
         child: const Row(
           children: [
-            Expanded(child: _StatCard(label: '본 영화', value: '342')),
+            Expanded(
+              child: _StatCard(label: '본 영화', value: '342'),
+            ),
             SizedBox(width: 8),
             // 평점 카드만 다른 테두리 색상 적용
             Expanded(
@@ -111,7 +125,9 @@ class _StatsSection extends StatelessWidget {
               ),
             ),
             SizedBox(width: 8),
-            Expanded(child: _StatCard(label: '즐겨찾기', value: '58')),
+            Expanded(
+              child: _StatCard(label: '즐겨찾기', value: '58'),
+            ),
           ],
         ),
       ),
@@ -204,14 +220,9 @@ class _GenreChip extends StatelessWidget {
         ),
       ),
       backgroundColor: AppColors.lavender,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       side: BorderSide.none,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 }

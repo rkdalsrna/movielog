@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
-import '../theme/app_colors.dart';
-import '../theme/app_text_styles.dart';
+import '../../data/services/member_check_service.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_text_styles.dart';
+import '../../view_models/sign_up_view_model.dart';
+import 'widgets/auth_text_form_field.dart';
+import 'widgets/email_check_field.dart';
+import 'widgets/nickname_check_field.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -77,45 +85,59 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Navigator.maybePop(context),
-          tooltip: '뒤로가기',
-          icon: SvgPicture.asset(
-            'assets/icons/arrow_back.svg',
-            width: 24,
-            height: 24,
+    return ChangeNotifierProvider<SignUpViewModel>(
+      create: (_) => SignUpViewModel(
+        MemberCheckService(
+          Dio(
+            BaseOptions(
+              baseUrl: dotenv.env['MEMBER_API_BASE_URL'] ?? '',
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            ),
           ),
         ),
-        title: const Text('회원가입', style: AppTextStyles.appBarTitle),
       ),
-      body: SafeArea(
-        top: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // 키보드가 열려도 화면 스크롤
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 44,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildInputSection(context),
-                      const SizedBox(height: 178),
-                      _buildActionSection(),
-                    ],
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: () => Navigator.maybePop(context),
+            tooltip: '뒤로가기',
+            icon: SvgPicture.asset(
+              'assets/icons/arrow_back.svg',
+              width: 24,
+              height: 24,
+            ),
+          ),
+          title: const Text('회원가입', style: AppTextStyles.appBarTitle),
+        ),
+        body: SafeArea(
+          top: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // 키보드가 열려도 화면 스크롤
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 44,
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildInputSection(context),
+                        const SizedBox(height: 178),
+                        _buildActionSection(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -149,36 +171,17 @@ class _AuthScreenState extends State<AuthScreen> {
             constraints: const BoxConstraints(maxWidth: 356, minHeight: 242),
             child: Column(
               children: [
-                AuthTextFormField(
-                  label: '닉네임',
-                  hintText: '닉네임을 입력해주세요',
-                  controller: _nicknameController,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                  validator: (value) {
-                    // 닉네임 조건 확인
-                    final nickname = value?.trim() ?? '';
-
-                    if (nickname.isNotEmpty && nickname.length < 2) {
-                      return '닉네임은 2자 이상이어야 합니다.';
-                    }
-
-                    return null;
-                  },
-                ),
+                NicknameCheckField(controller: _nicknameController),
                 const SizedBox(height: 16),
-                AuthTextFormField(
-                  label: '이메일',
-                  hintText: '이메일 주소를 입력해주세요',
+                EmailCheckField(
                   controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
                   onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   validator: (value) {
                     // 이메일 조건 확인
                     final email = value?.trim() ?? '';
 
-                    if (email.isNotEmpty && !_isValidEmail(email)) {
+                    if (email.isEmpty) return '이메일을 입력해 주세요.';
+                    if (!_isValidEmail(email)) {
                       return '올바른 이메일 형식이 아닙니다.';
                     }
 
@@ -323,187 +326,6 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class AuthTextFormField extends StatefulWidget {
-  const AuthTextFormField({
-    super.key,
-    required this.label,
-    required this.hintText,
-    required this.controller,
-    required this.validator,
-    this.focusNode,
-    this.keyboardType,
-    this.textInputAction,
-    this.obscureText = false,
-    this.onFieldSubmitted,
-  });
-
-  final String label;
-  final String hintText;
-  final TextEditingController controller;
-  final FormFieldValidator<String> validator;
-  final FocusNode? focusNode;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final bool obscureText;
-  final ValueChanged<String>? onFieldSubmitted;
-
-  @override
-  State<AuthTextFormField> createState() => _AuthTextFormFieldState();
-}
-
-class _AuthTextFormFieldState extends State<AuthTextFormField> {
-  late FocusNode _focusNode;
-  late bool _ownsFocusNode;
-  String? _validationError;
-  bool _isValid = false;
-
-  bool get _hasError => _validationError != null;
-
-  @override
-  void initState() {
-    super.initState();
-    _setUpFocusNode();
-  }
-
-  @override
-  void didUpdateWidget(covariant AuthTextFormField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.focusNode != widget.focusNode) {
-      _removeFocusNode();
-      _setUpFocusNode();
-    }
-  }
-
-  @override
-  void dispose() {
-    _removeFocusNode();
-    super.dispose();
-  }
-
-  void _setUpFocusNode() {
-    // 전달받은 포커스가 없으면 직접 생성
-    _ownsFocusNode = widget.focusNode == null;
-    _focusNode = widget.focusNode ?? FocusNode();
-    _focusNode.addListener(_handleFocusChange);
-  }
-
-  void _removeFocusNode() {
-    // 직접 만든 포커스만 정리
-    _focusNode.removeListener(_handleFocusChange);
-    if (_ownsFocusNode) _focusNode.dispose();
-  }
-
-  void _handleFocusChange() {
-    if (_focusNode.hasFocus) {
-      // 입력 중에는 검사 결과 숨기기
-      setState(() {
-        _validationError = null;
-        _isValid = false;
-      });
-      return;
-    }
-
-    final value = widget.controller.text;
-    // 커서가 빠지면 입력값 검사
-    final error = widget.validator(value);
-
-    setState(() {
-      _validationError = error;
-      _isValid = value.trim().isNotEmpty && error == null;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 70),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.label,
-            style: const TextStyle(
-              color: AppColors.black,
-              fontFamily: 'Manrope',
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          TextFormField(
-            controller: widget.controller,
-            focusNode: _focusNode,
-            keyboardType: widget.keyboardType,
-            textInputAction: widget.textInputAction,
-            obscureText: widget.obscureText,
-            onFieldSubmitted: widget.onFieldSubmitted,
-            autovalidateMode: AutovalidateMode.disabled,
-            forceErrorText: _validationError,
-            validator: widget.validator,
-            decoration: InputDecoration(
-              hintText: widget.hintText,
-              hintStyle: const TextStyle(
-                color: AppColors.gray,
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
-              filled: true,
-              fillColor: _hasError
-                  ? AppColors.errorContainer
-                  : AppColors.statCardBackground,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 11,
-              ),
-              enabledBorder: _outlineBorder(AppColors.statCardBorder),
-              focusedBorder: _outlineBorder(AppColors.primary),
-              errorBorder: _outlineBorder(AppColors.error),
-              focusedErrorBorder: _outlineBorder(AppColors.error),
-              errorStyle: const TextStyle(
-                color: AppColors.error,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 1.2,
-              ),
-              suffixIcon: _buildStatusIcon(),
-              suffixIconConstraints: const BoxConstraints(
-                minWidth: 48,
-                minHeight: 24,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget? _buildStatusIcon() {
-    if (!_hasError && !_isValid) return null;
-
-    final assetName = _isValid ? 'check_circle.svg' : 'error.svg';
-    final color = _isValid ? AppColors.primary : AppColors.error;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: SvgPicture.asset(
-        'assets/icons/$assetName',
-        width: 20,
-        height: 20,
-        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-      ),
-    );
-  }
-
-  OutlineInputBorder _outlineBorder(Color color) {
-    return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: BorderSide(color: color),
     );
   }
 }
