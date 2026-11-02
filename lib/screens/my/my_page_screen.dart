@@ -18,6 +18,11 @@ class MyPageScreen extends StatelessWidget {
         children: [
           const _ProfileSection(),
           const _StatsSection(),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/register'),
+            icon: const Icon(Icons.login),
+            label: const Text('로그인 (임시)'),
+          ),
           const SizedBox(height: 16),
           ListTile(
             shape: RoundedRectangleBorder(

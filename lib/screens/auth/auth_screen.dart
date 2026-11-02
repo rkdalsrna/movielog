@@ -180,7 +180,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     // 이메일 조건 확인
                     final email = value?.trim() ?? '';
 
-                    if (email.isNotEmpty && !_isValidEmail(email)) {
+                    if (email.isEmpty) return '이메일을 입력해 주세요.';
+                    if (!_isValidEmail(email)) {
                       return '올바른 이메일 형식이 아닙니다.';
                     }
 

@@ -31,6 +31,7 @@ class MovieLogButton extends StatelessWidget {
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.gray,
           foregroundColor: AppColors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

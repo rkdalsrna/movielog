@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../data/services/rating_api_service.dart';
 import '../view_models/my_ratings_view_model.dart';
 import '../screens/my/my_ratings_screen.dart';
+import '../screens/auth/auth_screen.dart';
 
 import 'package:provider/provider.dart';
 import 'package:movielog/data/services/tmdb_movie_service.dart';
@@ -24,6 +25,11 @@ class AppRouter {
     initialLocation: '/home',
     navigatorKey: rootNavigatorKey,
     routes: [
+      // 중복 확인 테스트를 위한 임시 인증 화면 진입 경로
+      GoRoute(
+        path: '/register',
+        builder: (context, state) => const AuthScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return MainScreen(navigationShell: navigationShell);
