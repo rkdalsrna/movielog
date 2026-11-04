@@ -15,9 +15,9 @@ class EmailCheckField extends StatefulWidget {
     this.onFieldSubmitted,
   });
 
-  final TextEditingController controller;
-  final FormFieldValidator<String> validator;
-  final ValueChanged<String>? onFieldSubmitted;
+  final TextEditingController controller; //입력값 관리
+  final FormFieldValidator<String> validator; //입력값 검증
+  final ValueChanged<String>? onFieldSubmitted; //입력 완료 콜백
 
   @override
   State<EmailCheckField> createState() => _EmailCheckFieldState();
@@ -28,7 +28,7 @@ class _EmailCheckFieldState extends State<EmailCheckField> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SignUpViewModel>(
+    return Consumer<SignUpViewModel>( //상태 구독
       builder: (context, viewModel, child) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -45,7 +45,7 @@ class _EmailCheckFieldState extends State<EmailCheckField> {
                   onFieldSubmitted: widget.onFieldSubmitted,
                   validator: widget.validator,
                   errorText: _formatError ?? viewModel.emailErrorText,
-                  onChanged: (value) {
+                  onChanged: (value) { //입력값 변경 감지
                     setState(() => _formatError = null);
                     viewModel.onEmailChanged(value);
                   },
@@ -57,14 +57,15 @@ class _EmailCheckFieldState extends State<EmailCheckField> {
                 child: MovieLogButton(
                   label: '중복 확인',
                   width: 102,
-                  isLoading: viewModel.emailCheckStatus == CheckStatus.checking,
-                  onPressed: viewModel.canCheckEmail
+                  isLoading: viewModel.emailCheckStatus == CheckStatus.checking, //로딩 상태
+                  onPressed: viewModel.canCheckEmail //버튼 활성화 조건
                       ? () {
                           final email = widget.controller.text.trim();
                           final error = email.isEmpty
                               ? '이메일을 입력해 주세요.'
                               : widget.validator(email);
-                          setState(() => _formatError = error);
+                          setState(() => _formatError = error); //검증 결과를 저장하고 다시 화면 빌드함
+
                           // 형식 검사를 통과한 경우에만 서버 중복 확인 요청
                           if (error != null) return;
                           viewModel.checkEmail(email);

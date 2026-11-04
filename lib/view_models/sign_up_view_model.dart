@@ -43,7 +43,8 @@ class SignUpViewModel extends ChangeNotifier {
     if (!_disposed) notifyListeners(); //종료되지 않았으면 상태 변경 알림
   }
 
-  Future<void> checkNickname(String value) async { //실제 닉네임 중복 확인
+  //실제 닉네임 중복 확인
+  Future<void> checkNickname(String value) async {
     final requested = value.trim();
     if (requested.isEmpty || requested != _currentNickname || //비어있는지, 현재 입력된 닉네임과 다른지, 중복 확인 중이거나 중복된 상태인지
         !canCheckNickname) return; //종료

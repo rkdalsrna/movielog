@@ -1,5 +1,3 @@
-import '';
-
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -18,7 +16,7 @@ class MovieLogButton extends StatelessWidget {
   final bool isLoading;
   final double? width;
 
-  bool get _disabled => isLoading || onPressed == null;
+  bool get _disabled => isLoading || onPressed == null; //로딩 중이거나 클릭할 함수가 없으면 버튼을 비활성화
 
   @override
   Widget build(BuildContext context) {
