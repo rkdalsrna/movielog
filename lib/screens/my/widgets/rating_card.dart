@@ -5,9 +5,22 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
 
 class RatingCard extends StatelessWidget {
-  const RatingCard({super.key, required this.entry});
+  const RatingCard({
+    super.key,
+    required this.entry,
+    required this.onEdit,
+    required this.onDelete,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelected,
+  });
 
   final RatingWithMovie entry;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final ValueChanged<bool?>? onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +102,29 @@ class RatingCard extends StatelessWidget {
                       color: AppColors.gray,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  if (isSelectionMode)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Checkbox(
+                        value: isSelected,
+                        onChanged: onSelected,
+                      ),
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: onEdit,
+                          child: const Text('수정'),
+                        ),
+                        TextButton(
+                          onPressed: onDelete,
+                          child: const Text('삭제'),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../view_models/sign_up_view_model.dart';
 import '../../../widgets/movielog_button.dart';
@@ -78,8 +79,25 @@ class _EmailCheckFieldState extends State<EmailCheckField> {
           if (_formatError == null &&
               widget.controller.text.trim().isNotEmpty &&
               widget.validator(widget.controller.text.trim()) == null &&
+              viewModel.emailCheckStatus == CheckStatus.checking)
+            Text(
+              '이메일 사용 가능 여부를 확인 중입니다.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.checking,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else if (_formatError == null &&
+              widget.controller.text.trim().isNotEmpty &&
+              widget.validator(widget.controller.text.trim()) == null &&
               viewModel.emailCheckStatus == CheckStatus.available)
-            const Text('사용할 수 있는 이메일입니다.', style: AppTextStyles.bodySmall),
+            Text(
+              '사용 가능한 이메일입니다.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
         ],
       ),
     );

@@ -215,7 +215,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                 genre.id: genre.name,
                             },
                             onMoviePressed: (movie) {
-                              context.push('/movies/${movie.id}');
+                              context.push(
+                                '/movies/${movie.id}',
+                                extra: movie,
+                              );
                             },
                           ),
                 };

@@ -3,116 +3,58 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:movielog/data/services/tmdb_movie_service.dart';
-import 'package:movielog/screens/movie/widgets/movie_list_loading.dart';
-import 'package:movielog/screens/movie/widgets/movie_list_error.dart';
-import 'package:movielog/models/movie.dart';
+import 'package:movielog/data/models/tmdb_movie_dto.dart';
 import 'package:movielog/screens/movie/widgets/rating_dialog.dart';
 import 'package:movielog/theme/app_colors.dart';
+import 'package:movielog/view_models/movie_detail_view_model.dart';
 
 class MovieDetailScreen extends StatefulWidget {
-  const MovieDetailScreen({super.key, required this.movieId});
-
-  final int? movieId;
+  const MovieDetailScreen({super.key});
 
   @override
   State<MovieDetailScreen> createState() => _MovieDetailScreenState();
 }
 
 class _MovieDetailScreenState extends State<MovieDetailScreen> {
-  late Future<Movie?> _movieFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMovie();
-  }
-
-  @override
-  void didUpdateWidget(covariant MovieDetailScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.movieId != widget.movieId) {
-      _isBookmarked = false;
-      _userRating = null;
-      _loadMovie();
-    }
-  }
-
-  //상세 API 요청을 저장해 화면 갱신 시 중복 호출 방지
-  void _loadMovie() {
-    final id = widget.movieId;
-    _movieFuture = id == null
-        ? Future<Movie?>.value(null)
-        : context.read<TmdbMovieService>().fetchMovieDetail(id);
-  }
-
   // 즐겨찾기 선택 상태
   bool _isBookmarked = false;
 
   // 사용자가 저장한 별점 상태
   double? _userRating;
 
-  Future<void> _showRatingDialog(Movie movie) async {
-    // Dialog가 반환한 별점 대기
-    final rating = await showDialog<double>(
+  Future<void> _showRatingDialog(TmdbMovieDto movie) async {
+    final saved = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return RatingDialog(
-          movieId: movie.id, //상세 조회한 TMDB 영화 ID 전달
-          initialRating: _userRating ?? 0,
-        );
-      },
+      barrierDismissible: false, // 저장 중 바깥 탭으로 닫히는 것도 막습니다.
+      builder: (_) => RatingDialog(
+        onSubmit: (score, comment) async {
+          final viewModel = context.read<MovieDetailViewModel>();
+          await viewModel.createRating(score: score, comment: comment);
+          if (viewModel.submitStatus != SubmitStatus.success) {
+            throw StateError(viewModel.submitMessage ?? '저장에 실패했습니다.');
+          }
+        },
+      ),
     );
 
-    // Dialog 취소 시 저장 처리 중단
-    if (rating == null || !mounted) return;
-
-    // Dialog에서 반환한 별점을 화면 내부 상태로 저장
-    setState(() => _userRating = rating);
+    if (!context.mounted || saved != true) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${movie.title}에 ${rating.toStringAsFixed(1)}점을 남겼습니다.'),
+      const SnackBar(
+        content: Text(
+          '평점을 등록했습니다. 마이페이지의 "내가 등록한 평점"에서 확인할 수 있습니다.',
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<Movie?>(
-      future: _movieFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            appBar: _DetailAppBar(onBackPressed: () => context.pop()),
-            body: const MovieListLoading(),
-          );
-        }
-        if (snapshot.hasError) {
-          return Scaffold(
-            appBar: _DetailAppBar(onBackPressed: () => context.pop()),
-            body: MovieListError(onRetry: () => setState(_loadMovie)),
-          );
-        }
-        return _buildMovie(context, snapshot.data);
-      },
-    );
+    final movie = context.read<MovieDetailViewModel>().movie;
+    return _buildMovie(context, movie);
   }
 
-  Widget _buildMovie(BuildContext context, Movie? movie) {
-    // 일치하는 영화가 없을 때 예외 화면 표시
-    if (movie == null) {
-      return Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back),
-          ),
-        ),
-        body: const Center(child: Text('영화를 찾을 수 없습니다.')),
-      );
-    }
-
+  Widget _buildMovie(BuildContext context, TmdbMovieDto movie) {
     return Scaffold(
       // 상세 화면 종료 후 이전 화면으로 이동
       appBar: _DetailAppBar(onBackPressed: () => context.pop()),
@@ -208,7 +150,7 @@ class _DetailAppBar extends AppBar {
 class _MovieInformation extends StatelessWidget {
   const _MovieInformation({required this.movie, required this.displayedRating});
 
-  final Movie movie;
+  final TmdbMovieDto movie;
   final double displayedRating;
 
   @override
