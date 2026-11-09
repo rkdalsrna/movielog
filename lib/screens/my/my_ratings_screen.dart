@@ -97,8 +97,10 @@ class MyRatingsScreen extends StatelessWidget {
             viewModel.isDeletingSelected;
         return PopScope(
           canPop: !viewModel.isDeletingSelected,
-          child: Scaffold(
-            appBar: AppBar(
+          child: LoadingOverlay(
+            isLoading: isLoading,
+            child: Scaffold(
+              appBar: AppBar(
               centerTitle: true,
               leading: const BackButton(),
               title: const Text(
@@ -116,9 +118,7 @@ class MyRatingsScreen extends StatelessWidget {
                   ),
               ],
             ),
-            body: LoadingOverlay(
-              isLoading: isLoading,
-              child: SafeArea(
+              body: SafeArea(
                 child: Column(
                   children: [
                     if (viewModel.isSelectionMode)
