@@ -38,8 +38,9 @@ class _AuthScreenState extends State<AuthScreen> {
   // 모든 가입 조건 확인
   bool get _canSubmit {
     return _nicknameController.text.trim().length >= 2 &&
+        _nicknameController.text.trim().length <= 12 &&
         _isValidEmail(_emailController.text.trim()) &&
-        _passwordController.text.length >= 8 &&
+        _validatePasswordFormat(_passwordController.text) == null &&
         _agreedToTerms;
   }
 
@@ -76,6 +77,25 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isValidEmail(String email) {
     // 이메일 형식 확인
     return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
+  }
+
+  String? _validatePasswordFormat(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) return '비밀번호를 입력해 주세요.';
+    if (password.length < 8) return '비밀번호는 8자 이상이어야 합니다.';
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return '비밀번호에 소문자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return '비밀번호에 대문자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return '비밀번호에 숫자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[!@#$%^&*]').hasMatch(password)) {
+      return '비밀번호에 특수문자 !@#\$%^&* 중 하나를 포함해 주세요.';
+    }
+    return null;
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -242,19 +262,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       onChanged: (_) => viewModel.onPasswordChanged(),
                       onFieldSubmitted: (_) =>
                           FocusScope.of(context).unfocus(),
-                      validator: (value) {
-                        // 비밀번호 조건 확인
-                        final password = value ?? '';
-
-                        if (password.isEmpty) {
-                          return '비밀번호를 입력해 주세요.';
-                        }
-                        if (password.length < 8) {
-                          return '비밀번호는 8자 이상이어야 합니다.';
-                        }
-
-                        return null;
-                      },
+                      validator: _validatePasswordFormat,
                     );
                   },
                 ),
@@ -324,23 +332,47 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _canSubmit ? () => _submit(context) : null,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  elevation: 0,
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                  disabledBackgroundColor: AppColors.disabledButton,
-                  disabledForegroundColor: AppColors.disabledButtonText,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  '가입하기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
+              Consumer<SignUpViewModel>(
+                builder: (context, viewModel, child) {
+                  final isSubmitting =
+                      viewModel.submitStatus == SubmitStatus.submitting;
+                  final checksPassed =
+                      viewModel.nicknameCheckStatus == CheckStatus.available &&
+                      viewModel.emailCheckStatus == CheckStatus.available;
+                  final canSubmit =
+                      _canSubmit && checksPassed && !isSubmitting;
+
+                  return ElevatedButton(
+                    onPressed: canSubmit ? () => _submit(context) : null,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      elevation: 0,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      disabledBackgroundColor: AppColors.disabledButton,
+                      disabledForegroundColor: AppColors.disabledButtonText,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const Text(
+                            '가입하기',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  );
+                },
               ),
               const SizedBox(height: 40),
               Row(

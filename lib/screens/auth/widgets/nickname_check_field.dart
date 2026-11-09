@@ -25,6 +25,7 @@ class _NicknameCheckFieldState extends State<NicknameCheckField> {
     final nickname = value?.trim() ?? '';
     if (nickname.isEmpty) return '닉네임을 입력해 주세요.';
     if (nickname.length < 2) return '닉네임은 2자 이상이어야 합니다.';
+    if (nickname.length > 12) return '닉네임은 12자 이하여야 합니다.';
     return null;
   }
 

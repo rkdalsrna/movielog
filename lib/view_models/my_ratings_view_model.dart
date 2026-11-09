@@ -111,9 +111,12 @@ class MyRatingsViewModel extends ChangeNotifier {
         comment: comment,
       );
     } on DioException catch (error) {
-      message = _service.writeErrorMessage(error);
+      final errorMessage = _service.writeErrorMessage(error);
+      message = errorMessage;
       notifyListeners();
       if (_service.shouldRefreshAfterRatingError(error)) await load();
+      message = errorMessage;
+      notifyListeners();
       rethrow; // 쓰기 실패일 때만 Dialog가 실패로 처리합니다.
     }
     await _refreshAfterWrite(); // GET 실패는 저장 실패로 다시 던지지 않습니다.
@@ -126,9 +129,12 @@ class MyRatingsViewModel extends ChangeNotifier {
         ratingId: ratingId,
       );
     } on DioException catch (error) {
-      message = _service.writeErrorMessage(error);
+      final errorMessage = _service.writeErrorMessage(error);
+      message = errorMessage;
       notifyListeners();
       if (_service.shouldRefreshAfterRatingError(error)) await load();
+      message = errorMessage;
+      notifyListeners();
       rethrow;
     }
     await _refreshAfterWrite();

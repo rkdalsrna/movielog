@@ -24,7 +24,14 @@ class LoadingOverlay extends StatelessWidget {
           ),
         if (isLoading)
           const Center(
-            child: CircularProgressIndicator(color: AppColors.white),
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                color: AppColors.white,
+                strokeWidth: 3,
+              ),
+            ),
           ),
       ],
     );

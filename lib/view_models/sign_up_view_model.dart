@@ -39,6 +39,8 @@ class SignUpViewModel extends ChangeNotifier {
   void onNicknameChanged(String value) { //사용자가 닉네임 입력값을 변경할 때 실행
     final trimmed = value.trim();
     _currentNickname = trimmed;
+    snackbarMessage = null;
+    if (submitStatus == SubmitStatus.error) submitStatus = SubmitStatus.idle;
     _requestVersion++; // 이전 요청의 응답을 무효화합니다.
     if (_duplicatedNickname != null && trimmed == _duplicatedNickname) { //중복된 닉네임을 저장한 적이 있는지 && 현재 입력값이 저장된 중복 닉네임과 같은지
       nicknameCheckStatus = CheckStatus.duplicated; //중복 상태로 변경
@@ -87,6 +89,8 @@ class SignUpViewModel extends ChangeNotifier {
   void onEmailChanged(String value) { // 사용자가 이메일 입력값을 변경할 때 실행
     final trimmed = value.trim();
     _currentEmail = trimmed;
+    snackbarMessage = null;
+    if (submitStatus == SubmitStatus.error) submitStatus = SubmitStatus.idle;
     _emailRequestVersion++; // 이전 이메일 요청의 응답을 무효화
     if (_duplicatedEmail != null && trimmed == _duplicatedEmail) {
       emailCheckStatus = CheckStatus.duplicated;
@@ -135,6 +139,8 @@ class SignUpViewModel extends ChangeNotifier {
 
   void onPasswordChanged() {
     passwordErrorText = null;
+    snackbarMessage = null;
+    if (submitStatus == SubmitStatus.error) submitStatus = SubmitStatus.idle;
     notifyListeners();
   }
 
