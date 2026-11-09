@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:movielog/models/movie.dart';
+import 'package:movielog/data/models/movie.dart';
 import 'package:movielog/data/models/tmdb_genre_dto.dart';
 import 'package:movielog/data/models/tmdb_movie_dto.dart';
 import 'package:movielog/data/models/tmdb_movie_page.dart';

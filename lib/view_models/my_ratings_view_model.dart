@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../data/models/rating_with_movie.dart';
 import '../data/services/rating_api_service.dart';
 import '../data/services/tmdb_movie_service.dart';
-import '../models/movie.dart';
-
-const int sampleMemberId = 1; // 인증된 내 계정이 아닌 학습용 데이터
+import '../data/models/movie.dart';
 
 enum MyRatingsLoadStatus { idle, loading, success, empty, error }
 

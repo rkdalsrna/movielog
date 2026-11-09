@@ -6,9 +6,9 @@ import '../../screens/movie/widgets/rating_dialog.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../view_models/my_ratings_view_model.dart';
-import '../../widgets/delete_rating_dialog.dart';
 import '../../widgets/loading_overlay.dart';
 import 'widgets/rating_card.dart';
+import 'widgets/delete_rating_dialog.dart';
 
 class MyRatingsScreen extends StatelessWidget {
   const MyRatingsScreen({super.key});

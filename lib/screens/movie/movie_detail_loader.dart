@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../data/models/tmdb_movie_dto.dart';
-import '../data/services/rating_api_service.dart';
-import '../data/services/tmdb_movie_service.dart';
-import '../view_models/learning_member_session.dart';
-import '../view_models/movie_detail_view_model.dart';
-import 'movie/movie_detail_screen.dart';
+import '../../data/models/tmdb_movie_dto.dart';
+import '../../data/services/rating_api_service.dart';
+import '../../data/services/tmdb_movie_service.dart';
+import '../../view_models/learning_member_session.dart';
+import '../../view_models/movie_detail_view_model.dart';
+import 'movie_detail_screen.dart';
 
 class MovieDetailLoader extends StatefulWidget {
   const MovieDetailLoader({

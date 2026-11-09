@@ -15,7 +15,7 @@ import 'package:movielog/view_models/movie_list_view_model.dart';
 import 'package:movielog/screens/home/home_screen.dart';
 import 'package:movielog/screens/main_screen.dart';
 import 'package:movielog/screens/movie/movie_list_screen.dart';
-import 'package:movielog/screens/movie_detail_loader.dart';
+import 'package:movielog/screens/movie/movie_detail_loader.dart';
 import 'package:movielog/screens/my/my_page_screen.dart';
 
 class AppRouter {
@@ -102,9 +102,6 @@ class AppRouter {
                 path: '/my',
                 builder: (context, state) => const MyPageScreen(),
                 routes: [
-                  // 회원가입 성공 콜백은 SignUpViewModel.createdMemberId를 위 세션에 저장합니다.
-                  // 6주차 /my/ratings Route의 sampleMemberId만 실제 학습용 회원 ID로 교체합니다.
-                  // rootNavigatorKey / parentNavigatorKey는 6주차에서 설정한 그대로 유지합니다.
                   GoRoute(
                     path: 'ratings', // /my Route 아래의 자식, root Navigator에 표시
                     parentNavigatorKey: AppRouter.rootNavigatorKey,

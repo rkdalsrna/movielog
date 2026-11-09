@@ -37,7 +37,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       ),
     );
 
-    if (!context.mounted || saved != true) return;
+    if (!mounted || saved != true) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

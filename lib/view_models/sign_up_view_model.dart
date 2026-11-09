@@ -56,7 +56,9 @@ class SignUpViewModel extends ChangeNotifier {
   Future<void> checkNickname(String value) async {
     final requested = value.trim();
     if (requested.isEmpty || requested != _currentNickname || //비어있는지, 현재 입력된 닉네임과 다른지, 중복 확인 중이거나 중복된 상태인지
-        !canCheckNickname) return; //종료
+        !canCheckNickname) {
+      return; //종료
+    }
 
     final version = ++_requestVersion; //요청 버전 증가
     nicknameCheckStatus = CheckStatus.checking; //중복 확인 중 상태로 변경
@@ -66,7 +68,9 @@ class SignUpViewModel extends ChangeNotifier {
     try {
       final available = await _service.checkNickname(requested); // 서버에 닉네임 중복 확인을 요청하고 사용 가능 여부를 기다림
       if (_disposed || version != _requestVersion ||
-          _currentNickname != requested) return; // 종료됐거나 최신 요청이 아니거나 입력값이 바뀌었다면 응답을 무시
+          _currentNickname != requested) {
+        return; // 종료됐거나 최신 요청이 아니거나 입력값이 바뀌었다면 응답을 무시
+      }
       nicknameCheckStatus = available // 사용 가능 여부에 따라 확인 상태를 설정
           ? CheckStatus.available : CheckStatus.duplicated;
       nicknameErrorText = available // 사용 가능하면 에러 메시지를 지우고 중복이면 안내 메시지를 설정
@@ -74,7 +78,9 @@ class SignUpViewModel extends ChangeNotifier {
       if (!available) _duplicatedNickname = requested; //중복된 닉네임이라면 _duplicatedNickname에 저장
     } on DioException {
       if (_disposed || version != _requestVersion ||
-          _currentNickname != requested) return; // 통신 오류가 발생해도 종료됐거나 현재 입력에 대한 최신 요청이 아니면 무시
+          _currentNickname != requested) {
+        return; // 통신 오류가 발생해도 종료됐거나 현재 입력에 대한 최신 요청이 아니면 무시
+      }
       nicknameCheckStatus = CheckStatus.error; // 요청 실패 상태와 재시도 안내 메시지를 설정
       nicknameErrorText = '중복 확인에 실패했습니다. 다시 시도해 주세요.';
     }
@@ -107,7 +113,9 @@ class SignUpViewModel extends ChangeNotifier {
     final requested = value.trim();
     if (requested.isEmpty ||
         requested != _currentEmail ||
-        !canCheckEmail) return;
+        !canCheckEmail) {
+      return;
+    }
 
     final version = ++_emailRequestVersion; // 이번 이메일 요청 번호 저장
     emailCheckStatus = CheckStatus.checking;
@@ -119,7 +127,9 @@ class SignUpViewModel extends ChangeNotifier {
       // 종료됐거나 최신 이메일 요청이 아니거나 입력값이 바뀌었다면 무시
       if (_disposed ||
           version != _emailRequestVersion ||
-          _currentEmail != requested) return;
+          _currentEmail != requested) {
+        return;
+      }
       emailCheckStatus = available
           ? CheckStatus.available : CheckStatus.duplicated;
       emailErrorText = available
@@ -129,7 +139,9 @@ class SignUpViewModel extends ChangeNotifier {
       // 이전 요청의 오류가 현재 이메일 상태를 덮어쓰지 않도록 확인
       if (_disposed ||
           version != _emailRequestVersion ||
-          _currentEmail != requested) return;
+          _currentEmail != requested) {
+        return;
+      }
       emailCheckStatus = CheckStatus.error;
       emailErrorText = '중복 확인에 실패했습니다. 다시 시도해 주세요.';
     }
