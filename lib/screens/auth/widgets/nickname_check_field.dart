@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_text_styles.dart';
 import '../../../view_models/sign_up_view_model.dart';
 import '../../../widgets/movielog_button.dart';
@@ -24,6 +25,7 @@ class _NicknameCheckFieldState extends State<NicknameCheckField> {
     final nickname = value?.trim() ?? '';
     if (nickname.isEmpty) return '닉네임을 입력해 주세요.';
     if (nickname.length < 2) return '닉네임은 2자 이상이어야 합니다.';
+    if (nickname.length > 12) return '닉네임은 12자 이하여야 합니다.';
     return null;
   }
 
@@ -75,8 +77,24 @@ class _NicknameCheckFieldState extends State<NicknameCheckField> {
           ),
           if (_formatError == null &&
               _validateNickname(widget.controller.text) == null &&
+              viewModel.nicknameCheckStatus == CheckStatus.checking)
+            Text(
+              '닉네임 사용 가능 여부를 확인 중입니다.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.checking,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else if (_formatError == null &&
+              _validateNickname(widget.controller.text) == null &&
               viewModel.nicknameCheckStatus == CheckStatus.available)
-            const Text('사용할 수 있는 닉네임입니다.', style: AppTextStyles.bodySmall),
+            Text(
+              '사용 가능한 닉네임입니다.',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
         ],
       ),
     );

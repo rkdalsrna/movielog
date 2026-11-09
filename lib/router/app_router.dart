@@ -2,7 +2,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 
 import '../data/services/rating_api_service.dart';
+import '../data/models/tmdb_movie_dto.dart';
 import '../view_models/my_ratings_view_model.dart';
+import '../view_models/learning_member_session.dart';
 import '../screens/my/my_ratings_screen.dart';
 import '../screens/auth/auth_screen.dart';
 
@@ -13,7 +15,7 @@ import 'package:movielog/view_models/movie_list_view_model.dart';
 import 'package:movielog/screens/home/home_screen.dart';
 import 'package:movielog/screens/main_screen.dart';
 import 'package:movielog/screens/movie/movie_list_screen.dart';
-import 'package:movielog/screens/movie/movie_detail_screen.dart';
+import 'package:movielog/screens/movie_detail_loader.dart';
 import 'package:movielog/screens/my/my_page_screen.dart';
 
 class AppRouter {
@@ -67,6 +69,30 @@ class AppRouter {
                     ),
                   );
                 },
+                routes: [
+                  GoRoute(
+                    path: ':movieId',
+                    builder: (context, state) {
+                      final id = int.tryParse(
+                        state.pathParameters['movieId'] ?? '',
+                      );
+                      if (id == null || id < 1) {
+                        return const Scaffold(
+                          body: Center(
+                            child: Text('영화 ID가 올바르지 않습니다.'),
+                          ),
+                        );
+                      }
+                      final extra = state.extra;
+                      return MovieDetailLoader(
+                        movieId: id,
+                        initialMovie: extra is TmdbMovieDto && extra.id == id
+                            ? extra
+                            : null,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -76,34 +102,35 @@ class AppRouter {
                 path: '/my',
                 builder: (context, state) => const MyPageScreen(),
                 routes: [
+                  // 회원가입 성공 콜백은 SignUpViewModel.createdMemberId를 위 세션에 저장합니다.
+                  // 6주차 /my/ratings Route의 sampleMemberId만 실제 학습용 회원 ID로 교체합니다.
+                  // rootNavigatorKey / parentNavigatorKey는 6주차에서 설정한 그대로 유지합니다.
                   GoRoute(
-                    path: 'ratings',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) =>
-                        ChangeNotifierProvider<MyRatingsViewModel>(
-                          create: (context) => MyRatingsViewModel(
-                            context.read<RatingApiService>(),
-                            context.read<TmdbMovieService>(),
-                            sampleMemberId,
-                          )..load(),
-                          child: const MyRatingsScreen(),
-                        ),
+                    path: 'ratings', // /my Route 아래의 자식, root Navigator에 표시
+                    parentNavigatorKey: AppRouter.rootNavigatorKey,
+                    builder: (context, state) {
+                      final id = context.read<LearningMemberSession>().memberId;
+                      if (id == null) {
+                        return Scaffold(
+                          appBar: AppBar(centerTitle: true, title: const Text('내가 등록한 평점')),
+                          body: const Center(child: Text('학습용 회원가입이 필요합니다.')),
+                        );
+                      }
+                      return ChangeNotifierProvider<MyRatingsViewModel>(
+                        create: (context) => MyRatingsViewModel(
+                          context.read<RatingApiService>(),
+                          context.read<TmdbMovieService>(),
+                          id,
+                        )..load(),
+                        child: const MyRatingsScreen(),
+                      );
+                    },
                   ),
                 ],
               ),
             ],
           ),
         ],
-      ),
-      //ShellRoute 밖에 상세 Route를 배치해 하단 네비게이션 숨김
-      GoRoute(
-        path: '/movies/:movieId',
-        builder: (context, state) {
-          //Path Parameter를 정수 ID로 변환해 상세 화면에 전달
-          return MovieDetailScreen(
-            movieId: int.tryParse(state.pathParameters['movieId'] ?? ''),
-          );
-        },
       ),
     ],
   );

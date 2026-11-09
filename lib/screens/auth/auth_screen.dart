@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/services/member_check_service.dart';
+import '../../data/models/create_member_request.dart';
+import '../../data/services/sign_up_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
+import '../../view_models/learning_member_session.dart';
 import '../../view_models/sign_up_view_model.dart';
 import 'widgets/auth_text_form_field.dart';
 import 'widgets/email_check_field.dart';
@@ -35,8 +38,9 @@ class _AuthScreenState extends State<AuthScreen> {
   // 모든 가입 조건 확인
   bool get _canSubmit {
     return _nicknameController.text.trim().length >= 2 &&
+        _nicknameController.text.trim().length <= 12 &&
         _isValidEmail(_emailController.text.trim()) &&
-        _passwordController.text.length >= 8 &&
+        _validatePasswordFormat(_passwordController.text) == null &&
         _agreedToTerms;
   }
 
@@ -75,19 +79,65 @@ class _AuthScreenState extends State<AuthScreen> {
     return RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
   }
 
-  void _submit() {
+  String? _validatePasswordFormat(String? value) {
+    final password = value ?? '';
+    if (password.isEmpty) return '비밀번호를 입력해 주세요.';
+    if (password.length < 8) return '비밀번호는 8자 이상이어야 합니다.';
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return '비밀번호에 소문자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return '비밀번호에 대문자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return '비밀번호에 숫자를 포함해 주세요.';
+    }
+    if (!RegExp(r'[!@#$%^&*]').hasMatch(password)) {
+      return '비밀번호에 특수문자 !@#\$%^&* 중 하나를 포함해 주세요.';
+    }
+    return null;
+  }
+
+  Future<void> _submit(BuildContext context) async {
     // 제출 전 전체 입력값 검사
     final isValid = _formKey.currentState?.validate() ?? false;
     if (!isValid || !_agreedToTerms) return;
 
     FocusScope.of(context).unfocus();
+
+    final viewModel = context.read<SignUpViewModel>();
+    await viewModel.submit(
+      CreateMemberRequest(
+        email: _emailController.text,
+        password: _passwordController.text,
+        nickname: _nicknameController.text,
+      ),
+    );
+
+    if (!context.mounted) return;
+
+    if (viewModel.submitStatus == SubmitStatus.success &&
+        viewModel.createdMemberId != null) {
+      context.read<LearningMemberSession>().setMemberId(
+        viewModel.createdMemberId!,
+      );
+      context.go('/movies');
+      return;
+    }
+
+    final message = viewModel.snackbarMessage;
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<SignUpViewModel>(
       create: (_) => SignUpViewModel(
-        MemberCheckService(
+        SignUpService(
           Dio(
             BaseOptions(
               baseUrl: dotenv.env['MEMBER_API_BASE_URL'] ?? '',
@@ -97,48 +147,58 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
         ),
       ),
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => Navigator.maybePop(context),
-            tooltip: '뒤로가기',
-            icon: SvgPicture.asset(
-              'assets/icons/arrow_back.svg',
-              width: 24,
-              height: 24,
-            ),
-          ),
-          title: const Text('회원가입', style: AppTextStyles.appBarTitle),
-        ),
-        body: SafeArea(
-          top: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // 키보드가 열려도 화면 스크롤
-              return SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight - 44,
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildInputSection(context),
-                        const SizedBox(height: 178),
-                        _buildActionSection(),
-                      ],
-                    ),
+      child: Consumer<SignUpViewModel>(
+        builder: (context, viewModel, child) {
+          return PopScope(
+            canPop: viewModel.submitStatus != SubmitStatus.submitting,
+            child: Scaffold(
+              appBar: AppBar(
+                leading: IconButton(
+                  onPressed: () => Navigator.maybePop(context),
+                  tooltip: '뒤로가기',
+                  icon: SvgPicture.asset(
+                    'assets/icons/arrow_back.svg',
+                    width: 24,
+                    height: 24,
                   ),
                 ),
-              );
-            },
-          ),
-        ),
+                title: const Text(
+                  '회원가입',
+                  style: AppTextStyles.appBarTitle,
+                ),
+              ),
+              body: SafeArea(
+                top: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // 키보드가 열려도 화면 스크롤
+                    return SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 20),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight - 44,
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _buildInputSection(context),
+                              const SizedBox(height: 178),
+                              _buildActionSection(context),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -189,23 +249,21 @@ class _AuthScreenState extends State<AuthScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AuthTextFormField(
-                  label: '비밀번호',
-                  hintText: '비밀번호를 입력해주세요',
-                  controller: _passwordController,
-                  focusNode: _passwordFocusNode,
-                  textInputAction: TextInputAction.done,
-                  obscureText: true,
-                  onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
-                  validator: (value) {
-                    // 비밀번호 조건 확인
-                    final password = value ?? '';
-
-                    if (password.isNotEmpty && password.length < 8) {
-                      return '비밀번호는 8자 이상이어야 합니다.';
-                    }
-
-                    return null;
+                Consumer<SignUpViewModel>(
+                  builder: (context, viewModel, child) {
+                    return AuthTextFormField(
+                      label: '비밀번호',
+                      hintText: '비밀번호를 입력해주세요',
+                      controller: _passwordController,
+                      focusNode: _passwordFocusNode,
+                      textInputAction: TextInputAction.done,
+                      obscureText: true,
+                      errorText: viewModel.passwordErrorText,
+                      onChanged: (_) => viewModel.onPasswordChanged(),
+                      onFieldSubmitted: (_) =>
+                          FocusScope.of(context).unfocus(),
+                      validator: _validatePasswordFormat,
+                    );
                   },
                 ),
               ],
@@ -216,7 +274,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildActionSection() {
+  Widget _buildActionSection(BuildContext context) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 356),
@@ -274,23 +332,47 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _canSubmit ? _submit : null,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                  elevation: 0,
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                  disabledBackgroundColor: AppColors.disabledButton,
-                  disabledForegroundColor: AppColors.disabledButtonText,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  '가입하기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
+              Consumer<SignUpViewModel>(
+                builder: (context, viewModel, child) {
+                  final isSubmitting =
+                      viewModel.submitStatus == SubmitStatus.submitting;
+                  final checksPassed =
+                      viewModel.nicknameCheckStatus == CheckStatus.available &&
+                      viewModel.emailCheckStatus == CheckStatus.available;
+                  final canSubmit =
+                      _canSubmit && checksPassed && !isSubmitting;
+
+                  return ElevatedButton(
+                    onPressed: canSubmit ? () => _submit(context) : null,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      elevation: 0,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      disabledBackgroundColor: AppColors.disabledButton,
+                      disabledForegroundColor: AppColors.disabledButtonText,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.white,
+                            ),
+                          )
+                        : const Text(
+                            '가입하기',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                  );
+                },
               ),
               const SizedBox(height: 40),
               Row(

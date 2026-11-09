@@ -19,6 +19,8 @@ abstract final class AppColors {
   static const disabledButtonText = Color(0xFFF7F3FB);
   static const error = Color(0xFFBA1A1A);
   static const errorContainer = Color(0xFFFFDAD6);
+  static const success = Color(0xFF2E7D32);
+  static const checking = Color(0xFF1976D2);
 
   static const black = Color(0xFF1C1B1F);
   static const gray = Color(0xFF79747E);
