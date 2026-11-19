@@ -16,7 +16,7 @@ class RatingApiService {
         .toList();
   }
 
-  Future<void> createRating({
+  Future<void> createRating({ //등록
     required int memberId,
     required CreateRatingRequest request,
   }) async {
@@ -30,7 +30,7 @@ class RatingApiService {
     }
   }
 
-  Future<void> updateRating({
+  Future<void> updateRating({ //수정
     required int memberId,
     required int ratingId,
     required int score,
@@ -42,7 +42,7 @@ class RatingApiService {
     );
   }
 
-  Future<void> deleteRating({
+  Future<void> deleteRating({ //삭제
     required int memberId,
     required int ratingId,
   }) async {

@@ -157,23 +157,28 @@ class SignUpViewModel extends ChangeNotifier {
   }
 
   Future<void> submit(CreateMemberRequest request) async {
-    if (submitStatus == SubmitStatus.submitting) return;
+    if (submitStatus == SubmitStatus.submitting) return; //중복 요청 방지
     submitStatus = SubmitStatus.submitting;
     createdMemberId = null;
     passwordErrorText = null;
     snackbarMessage = null;
     notifyListeners();
 
+    //서버에 회원가입 요청
     try {
       final response = await _service.signUp(request);
       final id = response.result?.memberId;
+
       if (id == null) throw StateError('회원가입 결과에 memberId가 없습니다.');
+
       createdMemberId = id;
-      submitStatus = SubmitStatus.success;
-    } on DioException catch (error) {
+      submitStatus = SubmitStatus.success; //id 있으면 회원가입 성공 상태로 변경
+
+    } on DioException catch (error) { //예외처리
       submitStatus = SubmitStatus.error;
       final message = _service.writeSignUpErrorMessage(error);
-      if (error.response?.statusCode == 400 && message.contains('비밀번호')) {
+
+      if (error.response?.statusCode == 400 && message.contains('비밀번호')) { //400 + 비밀번호 오류인지 확인
         passwordErrorText = message;
       } else {
         snackbarMessage = message;

@@ -26,12 +26,12 @@ class MyRatingsViewModel extends ChangeNotifier {
   bool isSelectionMode = false;
   bool isDeletingSelected = false;
 
-  void startSelection() {
+  void startSelection() { //선택 모드를 활성화
     isSelectionMode = true;
     notifyListeners();
   }
 
-  void cancelSelection() {
+  void cancelSelection() { //선택 모드를 종료 후 선택한 것들 지움
     isSelectionMode = false;
     selectedRatingIds.clear();
     notifyListeners();
@@ -44,11 +44,12 @@ class MyRatingsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> load() async {
+  Future<void> load() async { //평점 목록 조회
     final version = ++_requestVersion;
     status = MyRatingsLoadStatus.loading;
     message = null;
     notifyListeners();
+
     try {
       final rawRatings = await _service.fetchMyRatings(memberId);
       if (_disposed || version != _requestVersion) return;

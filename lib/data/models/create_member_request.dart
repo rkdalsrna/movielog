@@ -1,4 +1,4 @@
-//회원가입 요청, 응답 Model
+//서버에 보낼 회원가입 요청
 class CreateMemberRequest {
   const CreateMemberRequest({
     required this.email,
@@ -12,7 +12,7 @@ class CreateMemberRequest {
 
   Map<String, dynamic> toJson() => {
     'email': email.trim(),
-    'password': password,
+    'password': password, //비밀 번호는 trim() 하지 않음
     'nickname': nickname.trim(),
   };
 }

@@ -16,7 +16,7 @@ class MovieDetailViewModel extends ChangeNotifier {
   String? submitMessage;
   bool _disposed = false;
 
-  Future<void> createRating({required int score, String? comment}) async {
+  Future<void> createRating({required int score, String? comment}) async { //별점 생성
     final id = memberId;
     if (id == null) {
       submitStatus = SubmitStatus.error;
@@ -24,11 +24,14 @@ class MovieDetailViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    if (submitStatus == SubmitStatus.submitting) return;
+
+    if (submitStatus == SubmitStatus.submitting) return; //중복 요청 방지
+
     submitStatus = SubmitStatus.submitting;
     submitMessage = null;
     notifyListeners();
-    try {
+
+    try { //서버에 평점 등록 요청
       await _ratingService.createRating(
         memberId: id,
         request: CreateRatingRequest(

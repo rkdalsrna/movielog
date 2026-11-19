@@ -21,7 +21,6 @@ class SignUpService {
     return CheckResult.fromJson(response.data as Map<String, dynamic>).available; // JSON 응답을 Dart 객체로 변환 후 사용 가능 여부 반환
   }
 
-// 기존 SignUpService 클래스(구 MemberCheckService) 내부에 추가합니다.
   Future<CommonResponse<SignUpResult>> signUp( //회원가입 요청
       CreateMemberRequest request,
       ) async {
