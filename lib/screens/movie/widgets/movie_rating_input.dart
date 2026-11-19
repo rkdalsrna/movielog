@@ -7,26 +7,26 @@ class MovieRatingInput extends StatelessWidget {
     super.key,
     required this.rating,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final double rating;
   final ValueChanged<double> onChanged;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    // 0.5점 단위의 별점 입력 처리
     return RatingBar.builder(
       initialRating: rating,
-      minRating: 0.5,
-      allowHalfRating: true,
+      minRating: 1,
+      allowHalfRating: false, //별 한 개 단위로만 설정
+      ignoreGestures: !enabled,
       itemCount: 5,
       itemSize: 40,
-      itemPadding: const EdgeInsets.symmetric(horizontal: 2),
-      unratedColor: AppColors.disabledButton,
-      itemBuilder: (context, index) {
-        return const Icon(Icons.star_rounded, color: AppColors.primary);
-      },
-      // 선택한 별점을 Dialog로 전달
+      itemBuilder: (context, index) => const Icon(
+        Icons.star,
+        color: AppColors.primary,
+      ),
       onRatingUpdate: onChanged,
     );
   }

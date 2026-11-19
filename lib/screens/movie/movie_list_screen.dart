@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:movielog/view_models/movie_list_view_model.dart';
-import 'package:movielog/preferences/genre_preference.dart';
+import 'package:movielog/data/preferences/genre_preference.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid.dart';
 import 'package:movielog/screens/movie/widgets/movie_list_empty.dart';
@@ -215,7 +215,10 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                 genre.id: genre.name,
                             },
                             onMoviePressed: (movie) {
-                              context.push('/movies/${movie.id}');
+                              context.push(
+                                '/movies/${movie.id}',
+                                extra: movie,
+                              );
                             },
                           ),
                 };

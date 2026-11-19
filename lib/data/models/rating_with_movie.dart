@@ -1,4 +1,4 @@
-import '../../models/movie.dart';
+import 'movie.dart';
 import 'rating_dto.dart';
 
 class RatingWithMovie {
