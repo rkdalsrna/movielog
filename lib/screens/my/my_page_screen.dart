@@ -2,38 +2,64 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:movielog/theme/app_colors.dart';
 import 'package:movielog/theme/app_text_styles.dart';
+import 'package:provider/provider.dart';
+
+import '../../view_models/auth_view_model.dart';
+import '../../view_models/learning_member_session.dart';
 
 class MyPageScreen extends StatelessWidget {
   const MyPageScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthViewModel>();
+    final member = auth.member;
+    final learningMemberId = context.watch<LearningMemberSession>().memberId;
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: false,
         title: const Text('내 프로필', style: AppTextStyles.appBarTitle),
+        actions: [
+          TextButton(
+            onPressed: auth.storageCleanupInProgress ? null : auth.logout,
+            child: const Text(
+              '로그아웃',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontFamily: 'Manrope',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         children: [
-          const _ProfileSection(),
+          _ProfileSection(
+            nickname: member?.nickname,
+            email: member?.email,
+            onEdit: member == null
+                ? null
+                : () => context.push('/my/profile/edit'),
+          ),
           const _StatsSection(),
-          OutlinedButton.icon(
-            onPressed: () => context.push('/register'),
-            icon: const Icon(Icons.login),
-            label: const Text('로그인 (임시)'),
-          ),
-          const SizedBox(height: 16),
-          ListTile(
-            shape: RoundedRectangleBorder(
-              side: const BorderSide(color: AppColors.primary),
-              borderRadius: BorderRadius.circular(8),
+          if (learningMemberId != null) ...[
+            ListTile(
+              shape: RoundedRectangleBorder(
+                side: const BorderSide(color: AppColors.primary),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              title: const Text('유저별 평점 조회'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/my/ratings'),
             ),
-            title: const Text('내가 등록한 평점'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/my/ratings'),
-          ),
-          const SizedBox(height: 28),
+            const SizedBox(height: 28),
+          ],
           const _GenreSection(),
           const SizedBox(height: 24),
         ],
@@ -43,7 +69,15 @@ class MyPageScreen extends StatelessWidget {
 }
 
 class _ProfileSection extends StatelessWidget {
-  const _ProfileSection();
+  const _ProfileSection({
+    required this.nickname,
+    required this.email,
+    required this.onEdit,
+  });
+
+  final String? nickname;
+  final String? email;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -69,17 +103,20 @@ class _ProfileSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Text('무비러버', style: AppTextStyles.titleLarge),
+          Text(
+            nickname ?? '내 정보를 불러오는 중이에요',
+            style: AppTextStyles.titleLarge,
+          ),
           const SizedBox(height: 8),
-          const Text(
-            '매주 주말엔 영화관으로 출근하는 프로 관람객. 좋은 영화를 보고 기록하는 것을 좋아합니다.',
+          Text(
+            email ?? '',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium,
           ),
           const SizedBox(height: 16),
           // 프로필 수정 버튼 모양 설정
           TextButton(
-            onPressed: () {},
+            onPressed: onEdit,
             style: TextButton.styleFrom(
               foregroundColor: AppColors.primary,
               side: const BorderSide(color: AppColors.primary),

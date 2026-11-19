@@ -19,17 +19,21 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   // 즐겨찾기 선택 상태
   bool _isBookmarked = false;
 
-  // 사용자가 저장한 별점 상태
-  double? _userRating;
-
-  Future<void> _showRatingDialog(TmdbMovieDto movie) async {
+  Future<void> _showRatingDialog() async {
+    final viewModel = context.read<MovieDetailViewModel>();
+    final existing = viewModel.currentRating;
     final saved = await showDialog<bool>(
       context: context,
       barrierDismissible: false, // 저장 중 바깥 탭으로 닫히는 것도 막습니다.
       builder: (_) => RatingDialog(
+        initialScore: existing?.score ?? 0,
+        initialComment: existing?.comment,
         onSubmit: (score, comment) async {
-          final viewModel = context.read<MovieDetailViewModel>();
-          await viewModel.createRating(score: score, comment: comment);
+          if (existing == null) {
+            await viewModel.createRating(score: score, comment: comment);
+          } else {
+            await viewModel.updateRating(score: score, comment: comment);
+          }
           if (viewModel.submitStatus != SubmitStatus.success) {
             throw StateError(viewModel.submitMessage ?? '저장에 실패했습니다.');
           }
@@ -40,9 +44,42 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     if (!mounted || saved != true) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
+        content: Text(existing == null ? '평점을 등록했어요.' : '평점을 수정했어요.'),
+      ),
+    );
+  }
+
+  Future<void> _deleteRating() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('평점을 삭제할까요?'),
+        content: const Text('삭제한 평점은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final viewModel = context.read<MovieDetailViewModel>();
+    await viewModel.deleteRating();
+    if (!mounted) return;
+    final succeeded = viewModel.submitStatus == SubmitStatus.success;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
         content: Text(
-          '평점을 등록했습니다. 마이페이지의 "내가 등록한 평점"에서 확인할 수 있습니다.',
+          succeeded
+              ? '평점을 삭제했어요.'
+              : viewModel.submitMessage ?? '평점을 삭제하지 못했어요.',
         ),
       ),
     );
@@ -50,11 +87,15 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final movie = context.read<MovieDetailViewModel>().movie;
-    return _buildMovie(context, movie);
+    final viewModel = context.watch<MovieDetailViewModel>();
+    return _buildMovie(context, viewModel.movie, viewModel);
   }
 
-  Widget _buildMovie(BuildContext context, TmdbMovieDto movie) {
+  Widget _buildMovie(
+    BuildContext context,
+    TmdbMovieDto movie,
+    MovieDetailViewModel viewModel,
+  ) {
     return Scaffold(
       // 상세 화면 종료 후 이전 화면으로 이동
       appBar: _DetailAppBar(onBackPressed: () => context.pop()),
@@ -76,7 +117,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             _MovieInformation(
               movie: movie,
               //저장한 별점이 없으면 API 평점 표시
-              displayedRating: _userRating ?? movie.rating,
+              displayedRating:
+                  viewModel.currentRating?.score.toDouble() ?? movie.rating,
             ),
           ],
         ),
@@ -99,7 +141,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
           );
         },
         // 평점 버튼 선택 시 Dialog 열기
-        onRatingPressed: () => _showRatingDialog(movie),
+        onRatingPressed: _showRatingDialog,
+        onDeletePressed: viewModel.currentRating == null ? null : _deleteRating,
+        hasRating: viewModel.currentRating != null,
       ),
     );
   }
@@ -299,11 +343,15 @@ class _DetailActions extends StatelessWidget {
     required this.isBookmarked,
     required this.onBookmarkPressed,
     required this.onRatingPressed,
+    required this.onDeletePressed,
+    required this.hasRating,
   });
 
   final bool isBookmarked;
   final VoidCallback onBookmarkPressed;
   final VoidCallback onRatingPressed;
+  final VoidCallback? onDeletePressed;
+  final bool hasRating;
 
   @override
   Widget build(BuildContext context) {
@@ -344,9 +392,17 @@ class _DetailActions extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onRatingPressed,
                 icon: const Icon(Icons.rate_review_outlined, size: 20),
-                label: const Text('평점 남기기'),
+                label: Text(hasRating ? '평점 수정' : '평점 남기기'),
               ),
             ),
+            if (hasRating) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: '평점 삭제',
+                onPressed: onDeletePressed,
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
           ],
         ),
       ),

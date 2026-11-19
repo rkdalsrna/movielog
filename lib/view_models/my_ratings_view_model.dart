@@ -1,18 +1,26 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/network/api_error.dart';
 import '../data/models/rating_with_movie.dart';
 import '../data/services/rating_api_service.dart';
 import '../data/services/tmdb_movie_service.dart';
 import '../data/models/movie.dart';
+import 'auth_view_model.dart';
 
 enum MyRatingsLoadStatus { idle, loading, success, empty, error }
 
 class MyRatingsViewModel extends ChangeNotifier {
-  MyRatingsViewModel(this._service, this._movieService, this.memberId);
+  MyRatingsViewModel(
+    this._service,
+    this._movieService,
+    this._auth,
+    this.memberId,
+  );
 
   final RatingApiService _service;
   final TmdbMovieService _movieService;
+  final AuthViewModel _auth;
   final int memberId;
   final Map<int, Movie?> _movieCache = {};
   int _requestVersion = 0;
@@ -102,15 +110,24 @@ class MyRatingsViewModel extends ChangeNotifier {
     required int score,
     String? comment,
   }) async {
+    final sessionVersion = _auth.sessionVersion;
     try {
-      await _service.updateRating(
-        memberId: memberId,
+      final updated = await _service.updateRating(
         ratingId: ratingId,
         score: score,
         comment: comment,
       );
+      if (!_canApplySession(sessionVersion)) return;
+      ratings = [
+        for (final entry in ratings)
+          if (entry.rating.ratingId == ratingId)
+            RatingWithMovie(rating: updated, movie: entry.movie)
+          else
+            entry,
+      ];
     } on DioException catch (error) {
-      final errorMessage = _service.writeErrorMessage(error);
+      if (!await _handleWriteError(error, sessionVersion)) return;
+      final errorMessage = message!;
       message = errorMessage;
       notifyListeners();
       if (_service.shouldRefreshAfterRatingError(error)) await load();
@@ -122,13 +139,16 @@ class MyRatingsViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteRating(int ratingId) async {
+    final sessionVersion = _auth.sessionVersion;
     try {
-      await _service.deleteRating(
-        memberId: memberId,
-        ratingId: ratingId,
-      );
+      await _service.deleteRating(ratingId);
+      if (!_canApplySession(sessionVersion)) return;
+      ratings = ratings
+          .where((entry) => entry.rating.ratingId != ratingId)
+          .toList();
     } on DioException catch (error) {
-      final errorMessage = _service.writeErrorMessage(error);
+      if (!await _handleWriteError(error, sessionVersion)) return;
+      final errorMessage = message!;
       message = errorMessage;
       notifyListeners();
       if (_service.shouldRefreshAfterRatingError(error)) await load();
@@ -144,25 +164,56 @@ class MyRatingsViewModel extends ChangeNotifier {
     isDeletingSelected = true;
     notifyListeners();
     var failed = 0;
+    final sessionVersion = _auth.sessionVersion;
     try {
       for (final ratingId in selectedRatingIds.toList()) {
         try {
-          await _service.deleteRating(memberId: memberId, ratingId: ratingId);
+          await _service.deleteRating(ratingId);
           selectedRatingIds.remove(ratingId);
-        } on DioException {
+        } on DioException catch (error) {
+          if (!await _handleWriteError(error, sessionVersion)) return;
           failed++;
           // 실패한 항목은 선택 상태를 유지합니다.
         }
       }
     } finally {
       isDeletingSelected = false;
-      notifyListeners(); // 예상하지 못한 오류에도 로딩을 해제합니다.
+      if (!_disposed) {
+        notifyListeners(); // 예상하지 못한 오류에도 로딩을 해제합니다.
+      }
     }
     await _refreshAfterWrite(); // GET 실패는 삭제 성공 여부와 분리합니다.
     if (failed > 0) {
       message = '$failed개 항목을 삭제하지 못했습니다. 선택된 항목을 다시 확인해 주세요.';
       notifyListeners();
     }
+  }
+
+  bool _canApplySession(int version) {
+    return !_disposed &&
+        version == _auth.sessionVersion &&
+        _auth.status == AuthStatus.signedIn;
+  }
+
+  Future<bool> _handleWriteError(
+    DioException error,
+    int sessionVersion,
+  ) async {
+    if (!_canApplySession(sessionVersion)) return false;
+    final code = apiErrorCode(error);
+    if (code == 'AUTH401_2' ||
+        code == 'AUTH401_3' ||
+        code == 'AUTH401_4') {
+      await _auth.expireSession();
+      return false;
+    }
+    message = switch (code) {
+      'RATING403_1' => '본인이 작성한 평점만 변경할 수 있어요.',
+      'RATING409_1' => '이미 이 영화에 평점을 남겼어요.',
+      'RATING404_1' => '평점 정보를 찾을 수 없어요.',
+      _ => _service.writeErrorMessage(error),
+    };
+    return true;
   }
 
   @override
