@@ -5,7 +5,6 @@ import 'package:movielog/theme/app_text_styles.dart';
 import 'package:provider/provider.dart';
 
 import '../../view_models/auth_view_model.dart';
-import '../../view_models/learning_member_session.dart';
 
 class MyPageScreen extends StatelessWidget {
   const MyPageScreen({super.key});
@@ -14,7 +13,6 @@ class MyPageScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthViewModel>();
     final member = auth.member;
-    final learningMemberId = context.watch<LearningMemberSession>().memberId;
 
     return Scaffold(
       appBar: AppBar(
@@ -48,18 +46,32 @@ class MyPageScreen extends StatelessWidget {
                 : () => context.push('/my/profile/edit'),
           ),
           const _StatsSection(),
-          if (learningMemberId != null) ...[
-            ListTile(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: AppColors.primary),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              title: const Text('유저별 평점 조회'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/my/ratings'),
+          ListTile(
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: AppColors.statCardBorder),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(height: 28),
-          ],
+            title: const Text('내가 등록한 평점'),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.primary,
+            ),
+            onTap: () => context.push('/my/ratings'),
+          ),
+          const SizedBox(height: 8),
+          ListTile(
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: AppColors.statCardBorder),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text('내 즐겨찾기'),
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.primary,
+            ),
+            onTap: () => context.push('/my/favorites'),
+          ),
+          const SizedBox(height: 28),
           const _GenreSection(),
           const SizedBox(height: 24),
         ],

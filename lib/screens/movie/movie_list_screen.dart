@@ -4,6 +4,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:movielog/view_models/movie_list_view_model.dart';
+import 'package:movielog/view_models/paged_movies_view_model.dart';
+import 'package:movielog/view_models/load_phase.dart';
+import 'package:movielog/widgets/movie_page_footer.dart';
 import 'package:movielog/data/preferences/genre_preference.dart';
 import 'package:movielog/screens/movie/widgets/genre_filter_bottom_sheet.dart';
 import 'package:movielog/screens/movie/widgets/movie_grid.dart';
@@ -49,6 +52,8 @@ class _MovieListScreenState extends State<MovieListScreen> {
 
     //Query Parameter가 없으면 마지막 선택 장르 복원
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await context.read<MovieListViewModel>().loadGenres();
       if (!mounted) return;
       await _restoreSelectedGenres();
       if (mounted) _syncGenreRequest();
@@ -106,20 +111,26 @@ class _MovieListScreenState extends State<MovieListScreen> {
   }
 
   //초기 진입과 장르 변경 시에만 API 요청
-  void _syncGenreRequest() {
+  void _syncGenreRequest({bool force = false}) {
     final viewModel = context.read<MovieListViewModel>();
-    if (viewModel.status != MovieListLoadStatus.idle &&
+    final paged = context.read<PagedMoviesViewModel>();
+    if (!force &&
+        (paged.phase == LoadPhase.ready || paged.phase == LoadPhase.loading) &&
         setEquals(viewModel.selectedGenreNames, _selectedGenres)) {
       return;
     }
-    viewModel.selectGenres(_selectedGenres);
+    viewModel.setSelectedGenres(_selectedGenres);
+    final genreIds = viewModel.genres
+        .where((genre) => _selectedGenres.contains(genre.name))
+        .map((genre) => genre.id)
+        .toList(growable: false);
+    paged.loadInitial(genreIds: genreIds);
   }
 
   Future<void> _openGenreFilter() async {
     //요청 전과 요청 중에는 장르 선택 차단
-    final status = context.read<MovieListViewModel>().status;
-    if (status == MovieListLoadStatus.idle ||
-        status == MovieListLoadStatus.loading) {
+    final status = context.read<PagedMoviesViewModel>().phase;
+    if (status == LoadPhase.idle || status == LoadPhase.loading) {
       return;
     }
 
@@ -140,8 +151,7 @@ class _MovieListScreenState extends State<MovieListScreen> {
     //BottomSheet 취소 시 기존 필터 유지
     if (selectedGenres == null || !mounted) return;
     //선택창이 열린 동안 요청이 시작되면 변경 적용 차단
-    if (context.read<MovieListViewModel>().status ==
-        MovieListLoadStatus.loading) {
+    if (context.read<PagedMoviesViewModel>().phase == LoadPhase.loading) {
       return;
     }
 
@@ -175,12 +185,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
       child: Column(
         children: [
           const _MovieHeader(),
-          Consumer<MovieListViewModel>(
+          Consumer<PagedMoviesViewModel>(
             builder: (context, viewModel, child) {
               //요청이 끝나면 장르 필터 버튼 활성화
               final isLoading =
-                  viewModel.status == MovieListLoadStatus.idle ||
-                  viewModel.status == MovieListLoadStatus.loading;
+                  viewModel.phase == LoadPhase.idle ||
+                  viewModel.phase == LoadPhase.loading;
               return Opacity(
                 opacity: isLoading ? 0.4 : 1,
                 child: _FilterAction(
@@ -191,27 +201,27 @@ class _MovieListScreenState extends State<MovieListScreen> {
           ),
           Expanded(
             //ViewModel의 상태 변경을 구독해 목록 영역 갱신
-            child: Consumer<MovieListViewModel>(
-              builder: (context, viewModel, child) {
+            child: Consumer2<PagedMoviesViewModel, MovieListViewModel>(
+              builder: (context, viewModel, genreViewModel, child) {
                 //서버에서 장르 필터링한 결과를 그대로 표시
                 final filteredMovies = viewModel.movies;
                 //요청 상태에 따라 로딩·오류·빈 목록·영화 목록 표시
-                final content = switch (viewModel.status) {
-                  MovieListLoadStatus.idle || MovieListLoadStatus.loading =>
+                final content = switch (viewModel.phase) {
+                  LoadPhase.idle || LoadPhase.loading =>
                     const MovieListLoading(), //로딩 표시
-                  MovieListLoadStatus.error => MovieListError(
-                    message: viewModel.message, //오류 안내 문구
-                    onRetry: () => viewModel.loadInitial(), //재시도 시 API 다시 호출
+                  LoadPhase.error => MovieListError(
+                    message: viewModel.errorMessage,
+                    onRetry: () => _syncGenreRequest(force: true),
                   ),
-                  MovieListLoadStatus.empty => const MovieListEmpty(), //빈 목록 안내
-                  MovieListLoadStatus.success =>
+                  LoadPhase.empty => const MovieListEmpty(),
+                  LoadPhase.ready =>
                     filteredMovies.isEmpty
-                        ? const MovieListEmpty() //장르 필터 결과가 없어도 빈 목록 표시
+                        ? const MovieListEmpty()
                         : MovieGrid(
                             movies: filteredMovies,
                             //카드에 표시할 장르 ID와 이름 연결
                             genreNames: {
-                              for (final genre in viewModel.genres)
+                              for (final genre in genreViewModel.genres)
                                 genre.id: genre.name,
                             },
                             onMoviePressed: (movie) {
@@ -220,11 +230,12 @@ class _MovieListScreenState extends State<MovieListScreen> {
                                 extra: movie,
                               );
                             },
+                            footer: MoviePageFooter(vm: viewModel),
                           ),
                 };
                 //아래로 당기면 장르와 영화 목록 다시 조회
                 return RefreshIndicator(
-                  onRefresh: () => viewModel.loadInitial(),
+                  onRefresh: () async => _syncGenreRequest(force: true),
                   child: content is MovieGrid
                       ? content
                       //로딩·오류·빈 목록에서도 화면을 당길 수 있도록 스크롤 제공
@@ -270,7 +281,7 @@ class _MovieHeader extends StatelessWidget {
               ),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () => context.push('/movies/search'),
               tooltip: '영화 검색',
               icon: SvgPicture.asset(
                 'assets/icons/search.svg',

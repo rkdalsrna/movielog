@@ -29,6 +29,31 @@ class MovieListViewModel extends ChangeNotifier {
   //ViewModel 해제 여부를 확인
   bool _disposed = false;
 
+  // 페이지 목록은 PagedMoviesViewModel이 담당하고, 이 ViewModel은 장르 선택 UI를 지원합니다.
+  Future<void> loadGenres() async {
+    if (_disposed || status == MovieListLoadStatus.loading) return;
+    final version = ++_requestVersion;
+    status = MovieListLoadStatus.loading;
+    message = null;
+    notifyListeners();
+    try {
+      final loadedGenres = await _service.fetchGenres();
+      if (_disposed || version != _requestVersion) return;
+      genres = loadedGenres;
+      status = MovieListLoadStatus.success;
+    } on DioException {
+      if (_disposed || version != _requestVersion) return;
+      status = MovieListLoadStatus.error;
+      message = '장르를 불러오지 못했어요. 다시 시도해 주세요.';
+    }
+    if (!_disposed && version == _requestVersion) notifyListeners();
+  }
+
+  void setSelectedGenres(Set<String> names) {
+    selectedGenreNames = Set.unmodifiable(names);
+    if (!_disposed) notifyListeners();
+  }
+
   //여러 페이지에서 중복을 제외한 영화 최대 30개 조회
   Future<List<TmdbMovieDto>> fetchUpToThirtyMovies({
     List<int> genreIds = const [],

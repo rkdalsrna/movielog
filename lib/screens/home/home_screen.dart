@@ -28,8 +28,8 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _HomeHeader(
-                // 검색 버튼을 누르면 영화 목록 탭으로 이동
-                onSearchPressed: () => context.go('/movies'),
+                // 검색 버튼을 누르면 영화 검색 화면으로 이동
+                onSearchPressed: () => context.push('/movies/search'),
               ),
               const _QuestionHeader(),
               //실제 인기 영화 요청 상태에 따라 홈 콘텐츠 표시
