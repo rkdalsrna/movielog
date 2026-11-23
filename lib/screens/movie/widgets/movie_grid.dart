@@ -8,34 +8,41 @@ class MovieGrid extends StatelessWidget {
     required this.movies,
     required this.genreNames,
     required this.onMoviePressed,
+    this.footer,
   });
 
   final List<TmdbMovieDto> movies;
   final Map<int, String> genreNames;
   final ValueChanged<TmdbMovieDto> onMoviePressed;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
+    return CustomScrollView(
       //영화가 적어도 당겨서 새로고침 가능
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
-      itemCount: movies.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 24,
-        mainAxisExtent: 316.5,
-      ),
-      itemBuilder: (context, index) {
-        final movie = movies[index];
-
-        return MovieGridCard(
-          movie: movie,
-          genreNames: genreNames,
-          onTap: () => onMoviePressed(movie),
-        );
-      },
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(15, 8, 15, 24),
+          sliver: SliverGrid(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final movie = movies[index];
+              return MovieGridCard(
+                movie: movie,
+                genreNames: genreNames,
+                onTap: () => onMoviePressed(movie),
+              );
+            }, childCount: movies.length),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 24,
+              mainAxisExtent: 316.5,
+            ),
+          ),
+        ),
+        if (footer != null) SliverToBoxAdapter(child: footer),
+      ],
     );
   }
 }
