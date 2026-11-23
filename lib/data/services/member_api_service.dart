@@ -8,13 +8,13 @@ class MemberApiService {
   final Dio _authDio;
 
   Future<MemberInfo> fetchMe() async {
-    final response = await _authDio.get('/v7/members/me'); //내 회원 정보를 조회
+    final response = await _authDio.get('/v8/members/me'); //내 회원 정보를 조회
     return parseMemberInfo(response.data);
   }
 
   Future<MemberInfo> updateNickname(String nickname) async {
     final response = await _authDio.patch(
-      '/v7/members/me',
+      '/v8/members/me',
       data: {'nickname': nickname}, //닉네임을 수정
     );
     return parseMemberInfo(response.data);
